@@ -326,7 +326,7 @@ function RoomInner({ sectorId }: { sectorId: string }) {
     // life (applied when the wheel is claimed), so clean reasoning literally
     // makes you stronger sooner than guessing your way through.
     const flawless = res.mistakes === 0
-    const entries = rewardWheel(sectorId, flawless, res.mistakes)
+    const entries = rewardWheel(sectorId, flawless, res.mistakes, inv.owned)
     if (entries.length > 0) {
       setWheel({ segments: entries.map((e) => e.item), winnerIndex: pickWeightedIndex(entries), flawless })
     }

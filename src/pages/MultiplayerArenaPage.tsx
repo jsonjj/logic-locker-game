@@ -57,7 +57,11 @@ function Arena({ code, uid }: { code: string; uid: string }) {
   // stack the lessons-earned mastery boost on top.
   const mpWeapon = useMemo<MpWeaponProfile>(() => {
     const w = inv.weapon
-    const base = w.weaponKind === 'ranged' ? w : GEAR['plasma-pistol']
+    // The big arena needs at least a usable sidearm, so the feeble starter
+    // popgun floors to a Scrap Pistol here; stronger single-player guns win out.
+    const floor = GEAR['plasma-pistol']
+    const base =
+      w.weaponKind === 'ranged' && (w.range ?? 0) >= (floor.range ?? 0) ? w : floor
     const dmgBoost = mastery * 0.5
     const cdScale = Math.max(0.6, 1 - mastery * 0.04)
     return {

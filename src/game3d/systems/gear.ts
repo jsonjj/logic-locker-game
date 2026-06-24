@@ -27,17 +27,17 @@ export interface GearItem {
 }
 
 export const GEAR: Record<string, GearItem> = {
-  fists: {
-    id: 'fists',
-    name: 'Bare Fists',
+  popgun: {
+    id: 'popgun',
+    name: 'Popgun',
     slot: 'weapon',
-    icon: '👊',
-    color: '#c7cdd6',
-    desc: 'No gear. Short reach, slow swings — better than nothing.',
-    weaponKind: 'melee',
+    icon: '🫧',
+    color: '#9aa3ad',
+    desc: 'A toy-grade pop pistol. It fires, but barely — tiny range and a weak pop. Roll for something real.',
+    weaponKind: 'ranged',
     damage: 1,
-    range: 2.2,
-    cooldownMs: 600,
+    range: 6.5,
+    cooldownMs: 520,
   },
   dagger: {
     id: 'dagger',
@@ -138,16 +138,15 @@ export const GEAR: Record<string, GearItem> = {
   },
 }
 
-/** The starting loadout (always owned). */
-export const STARTER_WEAPON = 'fists'
+/** The starting loadout (always owned) — a guaranteed but feeble gun. */
+export const STARTER_WEAPON = 'popgun'
 
-// Reward handed out for clearing each sector, indexed by sector order. Power is
-// gated behind progress on purpose: you start with fists and earn melee first;
-// the first ranged weapon only comes after clearing two blocks, so the early
-// game forces you to learn (and earn) your way to a real arsenal.
+// Each sector's "signature" reward, indexed by order. You start with a weak
+// gun and every cleared lesson spins the wheel below for a real upgrade; this
+// list just gives each lesson a thematic headline prize weighted onto its wheel.
 const REWARD_BY_ORDER = [
-  'dagger', // 0 — first melee upgrade
-  'plasma-pistol', // 1 — early but weak ranged poke (a gun after block 2)
+  'dagger', // 0 — fast melee
+  'plasma-pistol', // 1 — a proper ranged sidearm
   'riot-armor', // 2 — survivability
   'stun-baton', // 3 — heavy melee
   'laser-rifle', // 4 — the real ranged payoff
@@ -197,24 +196,39 @@ export interface WheelEntry {
   weight: number
 }
 
-export function rewardWheel(sectorId: string, flawless: boolean, mistakes: number): WheelEntry[] {
+export function rewardWheel(
+  sectorId: string,
+  flawless: boolean,
+  mistakes: number,
+  owned: string[] = [],
+): WheelEntry[] {
+  const s = sectors.find((x) => x.id === sectorId)
+  const tier = s?.order ?? 0 // 0..6 — later lessons roll better gear.
+  const ownedSet = new Set(owned)
   const entries: WheelEntry[] = []
   const add = (id: string, weight: number) => {
     const it = GEAR[id]
-    if (it && weight > 0 && !entries.some((e) => e.item.id === id)) entries.push({ item: it, weight })
+    if (!it || weight <= 0 || entries.some((e) => e.item.id === id)) return
+    // Heavily favor NEW unlocks so each lesson tends to hand you something you
+    // don't already have — owned gear can still appear, just rarely.
+    entries.push({ item: it, weight: ownedSet.has(id) ? weight * 0.12 : weight })
   }
 
+  // The lesson's signature prize, weighted up (more so for a flawless clear).
   const base = rewardForSector(sectorId)
-  if (base) entries.push({ item: base, weight: flawless ? 5 : 4 })
+  if (base) add(base.id, flawless ? 6 : 5)
 
-  // Jackpot weapons — much likelier when you play clean.
-  add('laser-rifle', flawless ? 2.5 : mistakes > 0 ? 0.4 : 1)
-  add('shock-emitter', flawless ? 1.5 : 0.3)
-  // Survivability + utility.
-  add('riot-armor', 1.5)
+  // A generous spread of upgrades, with the strong gear scaling up by tier so
+  // later lessons are "better or more" rewarding.
+  add('plasma-pistol', 3) // easy early gun upgrade from the popgun
+  add('dagger', 2)
   add('combat-boots', 2)
-  add('medkit', mistakes > 0 ? 3 : 1.2)
-  add('dagger', 0.8)
+  add('riot-armor', 2 + tier * 0.4)
+  add('medkit', mistakes > 0 ? 3 : 1.5)
+  add('stun-baton', 1.5 + tier * 0.4)
+  add('laser-rifle', (flawless ? 3 : 1.2) + tier * 0.7) // the payoff gun, likelier late
+  add('energy-shield', 0.6 + tier * 0.6)
+  add('shock-emitter', (flawless ? 1.5 : 0.5) + tier * 0.6)
 
   return entries
 }

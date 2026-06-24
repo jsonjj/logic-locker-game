@@ -5,6 +5,7 @@ import { getLesson } from '../data/lessons'
 import StepRenderer from '../components/StepRenderer'
 import StepVisual from '../components/StepVisual'
 import InteractionHint from '../components/InteractionHint'
+import RoomScene, { type SceneStation } from '../game/RoomScene'
 import { isInteractiveStep } from '../logic/stepUtils'
 import ProgressBar from '../components/ProgressBar'
 import FeedbackPanel from '../components/FeedbackPanel'
@@ -31,7 +32,34 @@ import {
 } from '../logic/badgeLogic'
 import { computeUnlocks, getNextLessonId } from '../logic/lessonUnlocks'
 import { computeStreak, todayString } from '../logic/streak'
-import type { BadgeType, UserProfile } from '../types'
+import type { BadgeType, StepType, UserProfile } from '../types'
+
+/** Maps a step type to a station glyph + short label for the room scene. */
+function stationMeta(type: StepType): { glyph: string; label: string } {
+  switch (type) {
+    case 'dialogue':
+      return { glyph: 'i', label: 'Akash' }
+    case 'concept':
+      return { glyph: 'i', label: 'Case Board' }
+    case 'caseSummary':
+      return { glyph: '★', label: 'Wrap-up' }
+    case 'symbolTap':
+      return { glyph: '✓', label: 'Mark' }
+    case 'clueSort':
+      return { glyph: '≡', label: 'Evidence' }
+    case 'deductionGrid':
+    case 'miniGrid':
+      return { glyph: '#', label: 'Grid' }
+    case 'singleCellGrid':
+      return { glyph: '#', label: 'Cell' }
+    case 'logicSwitches':
+      return { glyph: '⏻', label: 'Switches' }
+    case 'ordering':
+      return { glyph: '↕', label: 'Sequence' }
+    default:
+      return { glyph: '?', label: 'Question' }
+  }
+}
 
 interface Feedback {
   status: 'correct' | 'wrong'
@@ -60,6 +88,7 @@ export default function LessonPage() {
   const [priorBadge, setPriorBadge] = useState<BadgeType | null>(null)
   const [saveError, setSaveError] = useState(false)
   const [track, setTrack] = useState(0)
+  const [modalOpen, setModalOpen] = useState(false)
 
   const uid = user?.uid
 
@@ -291,6 +320,7 @@ export default function LessonPage() {
   }
 
   function handleContinue() {
+    setModalOpen(false)
     const completingStep = currentStep!
     const updatedCompleted = addCompletedStep(completedStepIds, completingStep.id)
 
@@ -373,8 +403,15 @@ export default function LessonPage() {
     )
   }
 
+  const stations: SceneStation[] = lesson.steps.map((s) => {
+    const meta = stationMeta(s.type)
+    return { id: s.id, label: meta.label, glyph: meta.glyph }
+  })
+  const interactiveTotal = lesson.steps.filter(isInteractiveStep).length
+  const interactiveDone = lesson.steps.slice(0, index).filter(isInteractiveStep).length
+
   return (
-    <div className="app-shell">
+    <>
       {showRoundFailed && <RoundFailedOverlay onReview={() => setShowRoundFailed(false)} />}
 
       {saveError && (
@@ -386,55 +423,78 @@ export default function LessonPage() {
         </div>
       )}
 
-      <div className="topbar">
-        <button type="button" className="btn btn-ghost" onClick={() => navigate('/hallway')}>
-          ← Hallway
-        </button>
-        <span className="pill">{lesson.doorLabel}</span>
-      </div>
+      <RoomScene
+        title={lesson.title}
+        subtitle={lesson.doorLabel}
+        stations={stations}
+        activeIndex={index}
+        frozen={modalOpen}
+        onInteract={() => setModalOpen(true)}
+        onExit={() => navigate('/hallway')}
+        hudDone={interactiveDone}
+        hudTotal={interactiveTotal}
+      />
 
-      <div className="stack">
-        <div>
-          <h2 style={{ marginBottom: 4 }}>{lesson.title}</h2>
-          <ProgressBar current={index + 1} total={totalSteps} />
-        </div>
+      {modalOpen && (
+        <div className="game-modal" role="dialog" aria-modal="true" aria-label={lesson.title}>
+          <div className="game-modal-card">
+            <div className="game-modal-head">
+              <span className="game-modal-kicker">
+                {lesson.doorLabel} · Step {index + 1} of {totalSteps}
+              </span>
+              <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>
+                Close
+              </button>
+            </div>
+            <ProgressBar current={index + 1} total={totalSteps} />
 
-        <div key={stepKey} className="stack step-view">
-          {currentStep.prompt && (
-            <div className="card">
-              <p style={{ margin: 0, fontWeight: 600 }}>{currentStep.prompt}</p>
-              {currentStep.visual && (
-                <div style={{ marginTop: 14 }}>
-                  <StepVisual visual={currentStep.visual} />
+            <div key={stepKey} className="stack step-view">
+              {currentStep.prompt && (
+                <div className="card">
+                  <p style={{ margin: 0, fontWeight: 600 }}>{currentStep.prompt}</p>
+                  {currentStep.visual && (
+                    <div style={{ marginTop: 14 }}>
+                      <StepVisual visual={currentStep.visual} />
+                    </div>
+                  )}
                 </div>
               )}
+
+              {isInteractiveStep(currentStep) && !answered && (
+                <InteractionHint key={currentStep.type} type={currentStep.type} />
+              )}
+
+              <div className="card">
+                <StepRenderer
+                  key={stepKey}
+                  step={currentStep}
+                  locked={answered}
+                  onResult={handleResult}
+                />
+              </div>
+
+              {feedback && (
+                <FeedbackPanel
+                  status={feedback.status}
+                  message={feedback.message}
+                  guidedReasoning={currentStep.guidedReasoning}
+                  showReasoning={feedback.showReasoning}
+                />
+              )}
+
+              {answered && (
+                <button
+                  type="button"
+                  className="btn btn-success btn-block continue-btn"
+                  onClick={handleContinue}
+                >
+                  {isLastStep(lesson, currentStep.id) ? 'Finish Room' : 'Continue'}
+                </button>
+              )}
             </div>
-          )}
-
-          {isInteractiveStep(currentStep) && !answered && (
-            <InteractionHint key={currentStep.type} type={currentStep.type} />
-          )}
-
-          <div className="card">
-            <StepRenderer key={stepKey} step={currentStep} locked={answered} onResult={handleResult} />
           </div>
-
-          {feedback && (
-            <FeedbackPanel
-              status={feedback.status}
-              message={feedback.message}
-              guidedReasoning={currentStep.guidedReasoning}
-              showReasoning={feedback.showReasoning}
-            />
-          )}
-
-          {answered && (
-            <button type="button" className="btn btn-success btn-block continue-btn" onClick={handleContinue}>
-              {isLastStep(lesson, currentStep.id) ? 'Finish Room' : 'Continue'}
-            </button>
-          )}
         </div>
-      </div>
-    </div>
+      )}
+    </>
   )
 }

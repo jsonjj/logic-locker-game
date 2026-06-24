@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as engine from '../engine'
 
 export interface Joystick3DProps {
@@ -14,8 +14,9 @@ export interface Joystick3DProps {
  *
  *   1. Guaranteed: a window CustomEvent
  *        window.dispatchEvent(new CustomEvent('ll-joy', { detail: { x, y } }))
- *      where x,y ∈ [-1, 1]. x = right is +, y = down (screen) is +
- *      (so "push up" => y < 0 => move forward).
+ *      where x,y ∈ [-1, 1] in ENGINE convention (see game3d/engine/input.ts):
+ *      x = right is +, y = up/forward is + (so "push up" => y > 0 => forward).
+ *      The raw screen delta (down is +) is negated before publishing.
  *
  *   2. Optional fast path: if the engine barrel exports a `setJoyInput(x, y)`
  *      function, it is called directly. Detected safely at runtime so this file
@@ -46,6 +47,10 @@ export default function Joystick3D({ onChange }: Joystick3DProps) {
   const [knob, setKnob] = useState({ x: 0, y: 0 })
   const [engaged, setEngaged] = useState(false)
 
+  // If we unmount while the stick is held (e.g. the player dies), make sure we
+  // don't leave a non-zero vector latched in the shared input.
+  useEffect(() => () => publish(0, 0), [])
+
   function handle(clientX: number, clientY: number) {
     const base = baseRef.current
     if (!base) return
@@ -62,7 +67,9 @@ export default function Joystick3D({ onChange }: Joystick3DProps) {
     }
     setKnob({ x: dx, y: dy })
     const nx = max > 0 ? dx / max : 0
-    const ny = max > 0 ? dy / max : 0
+    // Screen Y grows downward; the engine wants up/forward = +. Negate so
+    // pushing the stick up walks forward (matching the W key).
+    const ny = max > 0 ? -dy / max : 0
     publish(nx, ny)
     onChange?.(nx, ny)
   }

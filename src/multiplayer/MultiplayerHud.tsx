@@ -1,5 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react'
 import ArenaMinimap from './ArenaMinimap'
+import Joystick3D from '../game3d/hud/Joystick3D'
 import type { LiveEnemy } from './SharedEnemies'
 import type { NetPlayer } from './types'
 
@@ -102,7 +103,11 @@ export default function MultiplayerHud({
       <button type="button" className="mp-fire" onClick={fireShot} aria-label="Fire">
         FIRE
       </button>
-      <p className="mp-hint">Move: WASD · Fire: F (or the button) · Round wins the series</p>
+
+      {/* Touch movement stick — CSS hides it on precise-pointer desktops. */}
+      {!dead && <Joystick3D />}
+
+      <p className="mp-hint">Move: WASD / stick · Fire: F (or the button) · Round wins the series</p>
 
       {dead && (
         <div className="mp-downed">

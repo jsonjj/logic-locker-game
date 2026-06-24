@@ -17,6 +17,8 @@ export interface GearItem {
   /** Reach in meters. */
   range?: number
   cooldownMs?: number
+  /** If set, the shot detonates and damages every enemy within this radius (m). */
+  aoe?: number
   // --- passive effects ---
   /** Extra lives granted while equipped (armor). */
   bonusLives?: number
@@ -61,29 +63,42 @@ export const GEAR: Record<string, GearItem> = {
     range: 3,
     cooldownMs: 480,
   },
+  'plasma-pistol': {
+    id: 'plasma-pistol',
+    name: 'Scrap Pistol',
+    slot: 'weapon',
+    icon: '✨',
+    color: '#46e0c0',
+    desc: 'A cobbled-together sidearm. Ranged, but weak — chip away and keep moving.',
+    weaponKind: 'ranged',
+    damage: 1,
+    range: 13,
+    cooldownMs: 360,
+  },
   'laser-rifle': {
     id: 'laser-rifle',
     name: 'Laser Rifle',
     slot: 'weapon',
     icon: '🔫',
     color: '#ff6a52',
-    desc: 'Long-range beam. Drop guards before they reach you.',
+    desc: 'Long-range beam that hits hard. Drop guards before they reach you.',
     weaponKind: 'ranged',
     damage: 3,
     range: 24,
-    cooldownMs: 520,
+    cooldownMs: 460,
   },
-  'plasma-pistol': {
-    id: 'plasma-pistol',
-    name: 'Plasma Pistol',
+  'shock-emitter': {
+    id: 'shock-emitter',
+    name: 'Shock Emitter',
     slot: 'weapon',
-    icon: '✨',
-    color: '#46e0c0',
-    desc: 'Quick ranged shots at medium range.',
+    icon: '💥',
+    color: '#b07cff',
+    desc: 'Lobs a pulse that jolts every guard in a small blast. Crowd control — not a one-shot.',
     weaponKind: 'ranged',
     damage: 2,
     range: 16,
-    cooldownMs: 320,
+    cooldownMs: 950,
+    aoe: 4.2,
   },
   'riot-armor': {
     id: 'riot-armor',
@@ -126,15 +141,18 @@ export const GEAR: Record<string, GearItem> = {
 /** The starting loadout (always owned). */
 export const STARTER_WEAPON = 'fists'
 
-// Reward handed out for clearing each sector, indexed by sector order.
+// Reward handed out for clearing each sector, indexed by sector order. Power is
+// gated behind progress on purpose: you start with fists and earn melee first;
+// the first ranged weapon only comes after clearing two blocks, so the early
+// game forces you to learn (and earn) your way to a real arsenal.
 const REWARD_BY_ORDER = [
-  'dagger',
-  'laser-rifle',
-  'riot-armor',
-  'stun-baton',
-  'plasma-pistol',
-  'combat-boots',
-  'energy-shield',
+  'dagger', // 0 — first melee upgrade
+  'plasma-pistol', // 1 — early but weak ranged poke (a gun after block 2)
+  'riot-armor', // 2 — survivability
+  'stun-baton', // 3 — heavy melee
+  'laser-rifle', // 4 — the real ranged payoff
+  'energy-shield', // 5 — heavy armor
+  'shock-emitter', // 6 — last block: the AoE crowd-clearer
 ]
 
 export function rewardForSector(sectorId: string): GearItem | undefined {
@@ -144,8 +162,25 @@ export function rewardForSector(sectorId: string): GearItem | undefined {
   return id ? GEAR[id] : undefined
 }
 
-/** Loose items the player can stumble on while exploring. */
-export const SCATTERED_PICKUPS = ['medkit', 'plasma-pistol', 'combat-boots'] as const
+/**
+ * Extra "mastery" gear, only handed out for a FLAWLESS (zero-mistake) clear.
+ * Clean play literally makes you stronger/faster sooner than sloppy play does.
+ */
+const FLAWLESS_BONUS_BY_ORDER = [
+  'combat-boots', // 0 — early speed for the deft
+  'medkit', // 1 — a heal for the sharp
+  // Later blocks: a flawless clear still grants +1 life (handled by the caller).
+]
+
+export function flawlessBonusForSector(sectorId: string): GearItem | undefined {
+  const s = sectors.find((x) => x.id === sectorId)
+  if (!s) return undefined
+  const id = FLAWLESS_BONUS_BY_ORDER[s.order]
+  return id ? GEAR[id] : undefined
+}
+
+/** Loose items the player can stumble on while exploring. No free guns. */
+export const SCATTERED_PICKUPS = ['medkit', 'combat-boots'] as const
 
 export function gear(id: string): GearItem | undefined {
   return GEAR[id]

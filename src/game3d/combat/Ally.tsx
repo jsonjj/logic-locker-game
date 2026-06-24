@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { CapsuleCollider, RigidBody, type RapierRigidBody } from '@react-three/rapier'
 import type { Group } from 'three'
@@ -31,7 +31,7 @@ interface Beam {
  * seeks the nearest hostile, closes in, and zaps it with a quick beam. Allies
  * are invulnerable — they're a reward for surviving the swarm.
  */
-export default function Ally({ spawn, speed = 3.3, paused = false }: AllyProps) {
+export default function Ally({ id, spawn, speed = 3.3, paused = false }: AllyProps) {
   const body = useRef<RapierRigidBody>(null)
   const rig = useRef<Group>(null)
   const lastShot = useRef(0)
@@ -39,6 +39,19 @@ export default function Ally({ spawn, speed = 3.3, paused = false }: AllyProps) 
   const [beam, setBeam] = useState<Beam | null>(null)
   const gs = useGameState()
   const combat = useCombat()
+
+  // Expose this helper's live position so the minimap can plot a blue dot.
+  useEffect(() => {
+    combat.registerAlly({
+      id,
+      getPos: () => {
+        const t = body.current?.translation()
+        return t ? { x: t.x, y: t.y, z: t.z } : { x: spawn.x, y: spawn.y, z: spawn.z }
+      },
+    })
+    return () => combat.unregisterAlly(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   useFrame((_, delta) => {
     const rb = body.current

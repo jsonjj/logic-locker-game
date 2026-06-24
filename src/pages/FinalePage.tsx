@@ -7,6 +7,7 @@ import GameMenu from '../game3d/hud/GameMenu'
 import CombatHud from '../game3d/hud/CombatHud'
 import InventoryPanel from '../game3d/hud/InventoryPanel'
 import GameOver from '../game3d/hud/GameOver'
+import Minimap from '../game3d/world/Minimap'
 import { GameStateProvider, useGameState } from '../game3d/state/GameStateContext'
 import { CombatProvider, useCombat } from '../game3d/combat/CombatContext'
 import Enemy, { type EnemyKind } from '../game3d/combat/Enemy'
@@ -349,6 +350,21 @@ function FinaleInner() {
     return TOTAL * 120 + run.lives * 400 + MAX_ALLIES * 80 + timeBonus
   }, [phase, elapsedSec, run.lives, MAX_ALLIES, TOTAL])
 
+  // Minimap layout for the corridor (memoized per phase so the map's rAF loop
+  // isn't torn down every render). Live red/blue dots come from the combat ctx.
+  const mapCustom = useMemo(() => {
+    const markers = [
+      { id: 'akash', x: AKASH.x, z: AKASH.z, className: 'll-minimap__marker ll-minimap__marker--exit' },
+    ]
+    if (phase === 'key') {
+      markers.push({ id: 'key', x: KEY_POS.x, z: KEY_POS.z, className: 'll-minimap__marker ll-minimap__marker--key' })
+    }
+    if (phase === 'arm' || phase === 'flee') {
+      markers.push({ id: 'c4', x: C4_POS.x, z: C4_POS.z, className: 'll-minimap__marker ll-minimap__marker--anchor' })
+    }
+    return { size: [HALL_W, HALL_D] as [number, number], title: 'Cell Block', markers }
+  }, [phase])
+
   const lightZs = useMemo(() => {
     const zs: number[] = []
     for (let z = -HALL_D / 2 + 8; z <= HALL_D / 2 - 8; z += 14) zs.push(z)
@@ -445,6 +461,8 @@ function FinaleInner() {
           setMenuOpen(true)
         }}
       />
+
+      {phase !== 'end' && <Minimap variant="custom" custom={mapCustom} />}
 
       {phase === 'flee' && (
         <div className="finale-fuse" role="status">

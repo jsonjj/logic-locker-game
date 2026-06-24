@@ -1,8 +1,12 @@
 import { createContext, useContext, useMemo, useRef, type ReactNode } from 'react'
 
-export interface EnemyHandle {
+/** Anything with a live world position (used by the minimap to plot dots). */
+export interface PosHandle {
   id: number
   getPos: () => { x: number; y: number; z: number }
+}
+
+export interface EnemyHandle extends PosHandle {
   /** Apply damage; returns true if this hit killed the enemy. */
   damage: (n: number) => boolean
   isAlive: () => boolean
@@ -20,6 +24,13 @@ interface CombatValue {
   ) => EnemyHandle | null
   /** All living enemy handles (snapshot). */
   enemies: () => EnemyHandle[]
+  /** Damage every living enemy within `radius` of (x,z). Returns the kill count. */
+  damageInRadius: (x: number, z: number, radius: number, amount: number) => number
+  /** Register/unregister a friendly helper so the minimap can show it. */
+  registerAlly: (h: PosHandle) => void
+  unregisterAlly: (id: number) => void
+  /** All registered ally handles (snapshot). */
+  allies: () => PosHandle[]
   /** Route a contact hit through global i-frames so guards can't drain you. */
   hitPlayer: (amount?: number) => void
   setPlayerDamageHandler: (fn: ((amount: number) => void) | null) => void
@@ -31,6 +42,7 @@ const IFRAME_MS = 1000
 
 export function CombatProvider({ children }: { children: ReactNode }) {
   const map = useRef(new Map<number, EnemyHandle>())
+  const allyMap = useRef(new Map<number, PosHandle>())
   const handler = useRef<((amount: number) => void) | null>(null)
   const lastHit = useRef(0)
 
@@ -67,6 +79,24 @@ export function CombatProvider({ children }: { children: ReactNode }) {
         return best
       },
       enemies: () => Array.from(map.current.values()).filter((h) => h.isAlive()),
+      damageInRadius: (x, z, radius, amount) => {
+        let kills = 0
+        for (const h of map.current.values()) {
+          if (!h.isAlive()) continue
+          const p = h.getPos()
+          if (Math.hypot(p.x - x, p.z - z) <= radius) {
+            if (h.damage(amount)) kills += 1
+          }
+        }
+        return kills
+      },
+      registerAlly: (h) => {
+        allyMap.current.set(h.id, h)
+      },
+      unregisterAlly: (id) => {
+        allyMap.current.delete(id)
+      },
+      allies: () => Array.from(allyMap.current.values()),
       hitPlayer: (amount = 1) => {
         const now = performance.now()
         if (now - lastHit.current < IFRAME_MS) return

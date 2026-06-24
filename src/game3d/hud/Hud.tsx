@@ -2,6 +2,7 @@ import type { ObjectiveState } from '../contracts'
 import { useGameState } from '../state/GameStateContext'
 import AlarmMeter from './AlarmMeter'
 import Joystick3D from './Joystick3D'
+import Wayfinder from './Wayfinder'
 import '../../styles/hud3d.css'
 
 export interface HudProps {
@@ -98,6 +99,8 @@ export default function Hud({
           </button>
         </div>
       </div>
+
+      <Wayfinder />
 
       {hint && (
         <div className="hud3d-interact">

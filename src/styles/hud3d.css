@@ -194,6 +194,76 @@
   animation: hud-vignette-pulse 1.4s ease-in-out infinite;
 }
 
+/* ---- Wayfinder (top-center objective compass + distance) ----
+   Sits BELOW the centered lives/gear cluster (.combat-top, top:12px) so the two
+   never overlap, and is narrowed to stay clear of the left objective banner. */
+.hud-wayfinder {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  max-width: min(40vw, 260px);
+  padding: 7px 14px 7px 9px;
+  background: var(--hud-glass-strong);
+  border: 1px solid var(--hud-line);
+  border-radius: 999px;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hud-wayfinder-compass {
+  position: relative;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 38%, rgba(245, 165, 36, 0.22), rgba(8, 11, 18, 0.5));
+  border: 1px solid rgba(245, 165, 36, 0.5);
+}
+
+.hud-wayfinder-arrow {
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 13px solid #f5a524;
+  filter: drop-shadow(0 0 5px rgba(245, 165, 36, 0.85));
+  transform-origin: 50% 65%;
+  will-change: transform;
+}
+
+.hud-wayfinder-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.hud-wayfinder-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--hud-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud-wayfinder-dist {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--hud-text);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---- Interact prompt ---- */
 .hud3d-interact {
   display: inline-flex;
@@ -272,8 +342,15 @@
   background: radial-gradient(circle at 38% 32%, #7fd0ff, #2a7dbf);
 }
 
-/* ---- Leaderboard peek widget ---- */
+/* ---- Leaderboard peek widget ----
+   Pinned to the empty bottom-left corner so it can never overlap the top
+   objective/alarm banner, the top-right logout/menu/minimap stack, the
+   bottom-center action button, or the bottom-right weapon/fire controls. */
 .hud-lb-peek {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  z-index: 21;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -298,6 +375,14 @@
 
 .hud-lb-peek:active {
   transform: translateY(0) scale(0.97);
+}
+
+/* On touch / small screens the joystick takes the bottom-left, so lift the
+   leaderboard above it to keep both fully visible. */
+@media (pointer: coarse), (max-width: 820px) {
+  .hud-lb-peek {
+    bottom: 172px;
+  }
 }
 
 .hud-lb-trophy {

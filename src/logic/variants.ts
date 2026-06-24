@@ -57,15 +57,21 @@ export function resolveStep(step: Step, track: number): Step {
  * players can't memorize "the answer is always B" or the exact wording.
  */
 export function varyLesson(lesson: Lesson, track: number): Lesson {
-  const steps = lesson.steps.map((step) => {
-    const resolved = resolveStep(step, track)
-    if (CHOICE_TYPES.has(resolved.type) && 'choices' in resolved) {
-      const cs = resolved as ChoiceStep
-      return { ...cs, choices: shuffle(cs.choices) } as Step
-    }
-    return resolved
-  })
-  return { ...lesson, steps }
+  return { ...lesson, steps: lesson.steps.map((step) => varyStep(step, track)) }
+}
+
+/**
+ * Resolve a single step to a track and shuffle its answer order (choice steps).
+ * Same "freshness" pass as varyLesson, applied per step so puzzle quizzes can be
+ * assembled from individual questions across tracks.
+ */
+export function varyStep(step: Step, track: number): Step {
+  const resolved = resolveStep(step, track)
+  if (CHOICE_TYPES.has(resolved.type) && 'choices' in resolved) {
+    const cs = resolved as ChoiceStep
+    return { ...cs, choices: shuffle(cs.choices) } as Step
+  }
+  return resolved
 }
 
 /**

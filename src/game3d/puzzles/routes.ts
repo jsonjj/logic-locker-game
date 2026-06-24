@@ -1,9 +1,10 @@
 /**
- * [Agent 3] Pure helpers (no React) that turn a Lesson into branching breach
- * routes and map each lesson Step type onto a security-device archetype.
+ * [Agent 3] Pure helpers (no React) that assemble a difficulty-scaled quiz from
+ * a Lesson and map each lesson Step type onto a security-device archetype.
  */
 import type { Lesson, Step, StepPhase } from '../../types'
-import type { DeviceKind, InteractiveStep, RouteDef } from './types'
+import { trackCount, varyStep } from '../../logic/variants'
+import type { DeviceKind, InteractiveStep, RouteRisk } from './types'
 
 const INTERACTIVE_TYPES = new Set<Step['type']>([
   'multipleChoice',
@@ -70,81 +71,92 @@ const PHASE_WEIGHT: Record<StepPhase, number> = {
   completion: 0,
 }
 
-function weight(step: InteractiveStep): number {
+/** Relative difficulty of a single question (higher = harder). */
+export function stepWeight(step: InteractiveStep): number {
   return PHASE_WEIGHT[step.phase] ?? 2
 }
 
+export type Difficulty = 'hard' | 'standard' | 'thorough'
+
+export interface DifficultyDef {
+  id: Difficulty
+  label: string
+  blurb: string
+  /** Number of questions the player must clear to open the lock. */
+  count: number
+  /** Flavor/badge styling reused from the old route risk classes. */
+  risk: RouteRisk
+}
+
 /**
- * Build the 2-3 branching routes for a sector. Every route opens the SAME lock,
- * so the player can take whichever path suits them:
- *   - "Brute Bypass"   (fast/risky)   one high-security node, no warm-up.
- *   - "Clean Crack"    (slow/safe)    a short ladder of simpler nodes.
- *   - "Manual Override"(balanced)     an independent alternate node / hybrid.
- * Routes are derived entirely from the lesson's real step content.
+ * Three ways to crack a lock. Fewer questions = harder questions; more
+ * questions = an easier-per-question but longer, complete sweep. Players trade
+ * brevity against difficulty.
  */
-export function buildRoutes(lesson: Lesson): RouteDef[] {
-  const interactive = lesson.steps.filter(isInteractive)
-  if (interactive.length === 0) return []
-
-  const byWeight = [...interactive].sort((a, b) => weight(a) - weight(b))
-  const hardest = byWeight[byWeight.length - 1]
-  const challenges = interactive.filter((s) => weight(s) >= 3)
-
-  const routes: RouteDef[] = []
-
-  // Route A — fast / risky: a single hardest node.
-  routes.push({
-    id: 'bypass',
-    label: 'Brute Bypass',
-    blurb: 'Slam the highest-security node in a single pass. Fast, but it offers no warm-up.',
+export const DIFFICULTIES: DifficultyDef[] = [
+  {
+    id: 'hard',
+    label: 'Lockdown',
+    blurb: 'Only 4 nodes — but the toughest the lesson has. No warm-up. For experts.',
+    count: 4,
     risk: 'fast',
-    steps: [hardest],
-  })
+  },
+  {
+    id: 'standard',
+    label: 'Standard',
+    blurb: '5 nodes. Still hard, with a touch more room to breathe.',
+    count: 5,
+    risk: 'balanced',
+  },
+  {
+    id: 'thorough',
+    label: 'Thorough',
+    blurb: '10 nodes. Each one a bit easier, but a long, complete sweep of the topic.',
+    count: 10,
+    risk: 'safe',
+  },
+]
 
-  // Route B — slow / safe: a short ladder of the simplest nodes.
-  const ladder = byWeight.filter((s) => s.id !== hardest.id).slice(0, 3)
-  if (ladder.length >= 1) {
-    routes.push({
-      id: 'methodical',
-      label: 'Clean Crack',
-      blurb: 'Work the access ladder node by node. Slower, fully guided, lowest risk.',
-      risk: 'safe',
-      steps: ladder,
-    })
-  }
+export function difficultyDef(id: Difficulty): DifficultyDef {
+  return DIFFICULTIES.find((d) => d.id === id) ?? DIFFICULTIES[1]
+}
 
-  // Route C — balanced: an independent alternate node, or a prime-then-force hybrid.
-  const altChallenge = challenges.find((s) => s.id !== hardest.id)
-  let cSteps: InteractiveStep[] = []
-  let cBlurb = ''
-  if (altChallenge) {
-    cSteps = [altChallenge]
-    cBlurb = 'Breach a different high-security node entirely. Independent path, same lock.'
+/**
+ * Assemble the quiz for a lock at the chosen difficulty.
+ *
+ * - "hard"/"standard": the N HARDEST distinct questions, presented hardest-first.
+ * - "thorough": a full sweep ramped easy → hard; if the lesson has fewer than N
+ *   distinct questions, it pads with extra authored variants (different tracks)
+ *   so it stays the longest but lowest-average-difficulty option.
+ *
+ * Each chosen question is resolved to a (varied) authored track with its answer
+ * order shuffled, so repeated visits aren't memorizable.
+ */
+export function buildQuiz(lesson: Lesson, difficulty: Difficulty): InteractiveStep[] {
+  const base = lesson.steps.filter(isInteractive)
+  if (base.length === 0) return []
+  const { count } = difficultyDef(difficulty)
+  const tracks = trackCount(lesson)
+
+  let picks: InteractiveStep[]
+  if (difficulty === 'thorough') {
+    // Ramp easy → hard; cycle from the easiest when padding past the pool.
+    const easyFirst = [...base].sort((a, b) => stepWeight(a) - stepWeight(b))
+    picks = Array.from({ length: count }, (_, i) => easyFirst[i % easyFirst.length])
   } else {
-    const relay = byWeight.find(
-      (s) => s.id !== hardest.id && !ladder.some((l) => l.id === s.id),
-    )
-    if (relay) {
-      cSteps = [relay, hardest]
-      cBlurb = 'Prime one relay, then force the core node. A balanced two-step breach.'
-    }
-  }
-  if (cSteps.length > 0) {
-    routes.push({
-      id: 'override',
-      label: 'Manual Override',
-      blurb: cBlurb,
-      risk: 'balanced',
-      steps: cSteps,
-    })
+    // The hardest `count`, toughest first; cycle from the hardest when padding.
+    const hardFirst = [...base].sort((a, b) => stepWeight(b) - stepWeight(a))
+    picks = Array.from({ length: count }, (_, i) => hardFirst[i % hardFirst.length])
   }
 
-  // Drop any routes that ended up clearing the exact same node set.
-  const seen = new Set<string>()
-  return routes.filter((route) => {
-    const signature = route.steps.map((s) => s.id).join('>')
-    if (seen.has(signature)) return false
-    seen.add(signature)
-    return true
+  // Resolve each pick to a varied track; give repeats of the same base question
+  // a different track so duplicates don't read identically.
+  const lastTrack = new Map<string, number>()
+  return picks.map((step) => {
+    const prev = lastTrack.get(step.id)
+    let track = Math.floor(Math.random() * tracks)
+    if (tracks > 1 && prev !== undefined) track = (prev + 1) % tracks
+    lastTrack.set(step.id, track)
+    return varyStep(step, track) as InteractiveStep
   })
 }

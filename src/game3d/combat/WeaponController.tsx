@@ -6,11 +6,13 @@ import { useInventory } from '../state/InventoryContext'
 import { useCombat } from './CombatContext'
 
 interface Fx {
-  kind: 'ranged' | 'melee'
+  kind: 'ranged' | 'melee' | 'aoe'
   from: [number, number, number]
   to: [number, number, number]
   color: string
   until: number
+  /** Blast radius (m), only for kind === 'aoe'. */
+  radius?: number
 }
 
 /** The fire dispatch: any DOM control can `window.dispatchEvent(new Event('ll-fire'))`. */
@@ -50,6 +52,26 @@ export default function WeaponController({ disabled = false }: WeaponControllerP
       )
 
       const muzzle: [number, number, number] = [from.x, from.y + 0.2, from.z]
+
+      // AoE weapon: detonate at the aimed enemy (or a forward point) and jolt
+      // everyone in the blast — strong crowd control, but not a one-shot.
+      if (w.aoe) {
+        let ix: number
+        let iz: number
+        if (target) {
+          const tp = target.getPos()
+          ix = tp.x
+          iz = tp.z
+        } else {
+          const reach = Math.min(w.range ?? 12, 12)
+          ix = from.x + Math.sin(heading) * reach
+          iz = from.z + Math.cos(heading) * reach
+        }
+        combat.damageInRadius(ix, iz, w.aoe, w.damage ?? 1)
+        setFx({ kind: 'aoe', from: muzzle, to: [ix, from.y + 0.2, iz], color: w.color, radius: w.aoe, until: now + 260 })
+        return
+      }
+
       if (target) {
         const tp = target.getPos()
         target.damage(w.damage ?? 1)
@@ -94,6 +116,22 @@ export default function WeaponController({ disabled = false }: WeaponControllerP
   })
 
   if (!fx) return null
+
+  if (fx.kind === 'aoe') {
+    const r = fx.radius ?? 4
+    return (
+      <group position={[fx.to[0], 0.15, fx.to[2]]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[r * 0.55, r, 40]} />
+          <meshStandardMaterial color={fx.color} emissive={fx.color} emissiveIntensity={2.4} transparent opacity={0.6} />
+        </mesh>
+        <mesh position={[0, 0.6, 0]}>
+          <sphereGeometry args={[r * 0.45, 16, 16]} />
+          <meshStandardMaterial color={fx.color} emissive={fx.color} emissiveIntensity={1.8} transparent opacity={0.28} />
+        </mesh>
+      </group>
+    )
+  }
 
   if (fx.kind === 'ranged') {
     return (

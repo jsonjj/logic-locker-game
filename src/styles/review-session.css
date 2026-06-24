@@ -1,0 +1,146 @@
+/* Post-room debrief / review session overlay (integrator-owned) */
+
+.review-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(245, 165, 36, 0.1), transparent 60%),
+    rgba(8, 10, 15, 0.8);
+  backdrop-filter: blur(5px);
+}
+
+.review-card {
+  width: 100%;
+  max-width: 620px;
+  max-height: min(86vh, 760px);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #1b212b 0%, #161b22 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 24px 26px;
+  color: #eef1f5;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55);
+}
+
+.review-head {
+  flex: 0 0 auto;
+}
+
+.review-kicker {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #f5a524;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.review-title {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+}
+
+.review-score {
+  margin: 0 0 14px;
+  color: #c7d2e2;
+  line-height: 1.5;
+}
+
+.review-score b {
+  color: #fff;
+}
+
+.review-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 4px 4px 4px 0;
+  display: grid;
+  gap: 10px;
+}
+
+.review-item {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.review-item.is-wrong {
+  border-color: rgba(239, 83, 80, 0.5);
+  background: rgba(239, 83, 80, 0.08);
+}
+
+.review-item.is-right {
+  border-color: rgba(102, 187, 106, 0.35);
+}
+
+.review-mark {
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.review-item.is-right .review-mark {
+  color: #66bb6a;
+}
+
+.review-item.is-wrong .review-mark {
+  color: #ef5350;
+}
+
+.review-q {
+  margin: 0;
+  line-height: 1.45;
+  color: #eef1f5;
+  font-weight: 600;
+}
+
+.review-why {
+  margin: 8px 0 0;
+  line-height: 1.5;
+  color: #dde4ee;
+}
+
+.review-remember {
+  margin-top: 8px;
+}
+
+.review-remember ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.review-remember li {
+  color: #c7d2e2;
+  line-height: 1.45;
+}
+
+.review-label {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #f5a524;
+  margin-right: 6px;
+}
+
+.review-actions {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}

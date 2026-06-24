@@ -8,10 +8,13 @@ interface ResultsScreenProps {
   /** Whether this run is the player's new personal best. */
   isBest: boolean
   sectorName?: string
+  /** Name of the next block, shown as a hint to walk back to its door. */
+  nextSectorName?: string
   onRetry: () => void
-  onNext?: () => void
   onMap: () => void
   onLeaderboard: () => void
+  /** Reopen the per-question debrief, when one is available. */
+  onReview?: () => void
 }
 
 const STAR_HEADLINE: Record<number, string> = {
@@ -26,10 +29,11 @@ export default function ResultsScreen({
   result,
   isBest,
   sectorName,
+  nextSectorName,
   onRetry,
-  onNext,
   onMap,
   onLeaderboard,
+  onReview,
 }: ResultsScreenProps) {
   return (
     <div className="lockdown ll-results">
@@ -67,18 +71,24 @@ export default function ResultsScreen({
           </div>
         </dl>
 
+        <p className="ll-results-hint">
+          {nextSectorName
+            ? `Next up: ${nextSectorName} — head back into the prison and walk to its door.`
+            : 'Head back into the prison to take on the Warden.'}
+        </p>
+
         <div className="ll-results-actions">
-          {onNext && (
-            <button type="button" className="ll-btn ll-btn-primary" onClick={onNext}>
-              Next Sector
-            </button>
-          )}
+          <button type="button" className="ll-btn ll-btn-primary" onClick={onMap}>
+            Back to the prison
+          </button>
           <button type="button" className="ll-btn ll-btn-ghost" onClick={onRetry}>
             Retry
           </button>
-          <button type="button" className="ll-btn ll-btn-ghost" onClick={onMap}>
-            Map
-          </button>
+          {onReview && (
+            <button type="button" className="ll-btn ll-btn-ghost" onClick={onReview}>
+              Review answers
+            </button>
+          )}
           <button type="button" className="ll-btn ll-btn-ghost" onClick={onLeaderboard}>
             Leaderboard
           </button>

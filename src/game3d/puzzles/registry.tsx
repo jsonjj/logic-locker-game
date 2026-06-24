@@ -8,9 +8,9 @@ import PuzzleScene from './PuzzleScene'
  * Every sector is cracked through the same adaptive controller, `PuzzleScene`,
  * which reads the sector's lesson and assembles real security devices —
  * Override Console (choices), Evidence Locker (clue sort), Deduction Terminal
- * (grids), Logic-Gate Panel (switches), Relay Sequencer (ordering) — and offers
- * 2-3 branching breach routes per scene. Keeping the controller generic means a
- * sector's puzzle always stays tied to its authored lesson content.
+ * (grids), Logic-Gate Panel (switches), Relay Sequencer (ordering) — sized by a
+ * difficulty choice (4 hardest / 5 / 10 easier-but-longer questions). Keeping the
+ * controller generic means a sector's puzzle stays tied to its lesson content.
  *
  * Contract kept stable: `getPuzzleScene(sectorId)` returns a component that
  * accepts `PuzzleSceneProps` and reports a `PuzzleResult` via `onComplete`.

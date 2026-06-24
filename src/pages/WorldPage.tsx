@@ -35,10 +35,12 @@ interface HubEnemy {
   damage: number
 }
 
-// A couple of slow guards patrolling the central hall + loose gear to find.
+// Guards patrolling the central hall + loose (non-weapon) gear to find. With
+// only fists at the start, these are a real deterrent — earn weapons first.
 const HUB_GUARDS: HubEnemy[] = [
-  { id: 1, spawn: vec3(-9, 1, -6), speed: 2, hp: 3, kind: 'melee', damage: 1 },
-  { id: 2, spawn: vec3(9, 1, -3), speed: 2.1, hp: 3, kind: 'melee', damage: 1 },
+  { id: 1, spawn: vec3(-9, 1, -6), speed: 2.3, hp: 5, kind: 'melee', damage: 1 },
+  { id: 2, spawn: vec3(9, 1, -3), speed: 2.4, hp: 5, kind: 'melee', damage: 1 },
+  { id: 3, spawn: vec3(0, 1, -10), speed: 2.2, hp: 4, kind: 'ranged', damage: 1 },
 ]
 const HUB_PICKUP_SPOTS = [vec3(-12, 0, 5), vec3(12, 0, 1), vec3(0, 0, -7)]
 
@@ -265,7 +267,13 @@ function WorldInner() {
         }}
       />
 
-      <Minimap variant="hub" />
+      <Minimap
+        variant="hub"
+        extraMarkers={SCATTERED_PICKUPS.filter((id) => !inv.isOwned(id)).map((id, i) => {
+          const p = HUB_PICKUP_SPOTS[i % HUB_PICKUP_SPOTS.length]
+          return { id: `item-${id}`, x: p.x, z: p.z, className: 'll-minimap__marker ll-minimap__marker--item' }
+        })}
+      />
       <LeaderboardPeek />
 
       <CombatHud

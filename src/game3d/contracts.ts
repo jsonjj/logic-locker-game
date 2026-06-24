@@ -190,13 +190,27 @@ export interface HubDef {
 // Puzzle scenes (Agent 3)
 // ---------------------------------------------------------------------------
 
+/** A per-question debrief entry, used by the post-room review session. */
+export interface PuzzleReviewItem {
+  /** The question prompt as the player saw it. */
+  prompt: string
+  /** True if answered correctly on the first try (no wrong attempts). */
+  correct: boolean
+  /** Plain-language explanation of why the wrong answer fails. */
+  explanation?: string
+  /** Core things to remember for next time. */
+  takeaways?: string[]
+}
+
 /** Outcome a puzzle scene reports back to the gameplay flow. */
 export interface PuzzleResult {
   solved: boolean
   mistakes: number
   timeMs: number
-  /** Which of the 2-3 branching routes the player took, for flavor/score. */
+  /** Which difficulty / branching route the player took, for flavor/score. */
   route?: string
+  /** Per-question debrief for the review session. */
+  review?: PuzzleReviewItem[]
 }
 
 /** Props every puzzle scene component receives. */

@@ -262,6 +262,14 @@
   color: var(--ll-alarm);
 }
 
+.ll-results-hint {
+  margin: 2px 0 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ll-ink-dim);
+  text-align: center;
+}
+
 .ll-results-actions {
   display: flex;
   flex-wrap: wrap;

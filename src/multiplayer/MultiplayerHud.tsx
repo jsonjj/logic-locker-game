@@ -18,6 +18,10 @@ interface MultiplayerHudProps {
   playersRef: RefObject<Record<string, NetPlayer>>
   enemiesViewRef: RefObject<Map<string, LiveEnemy> | null>
   ids: string[]
+  /** Equipped weapon name + effective power, and lessons-cleared mastery. */
+  weaponName: string
+  power: number
+  mastery: number
 }
 
 function fireShot() {
@@ -39,6 +43,9 @@ export default function MultiplayerHud({
   playersRef,
   enemiesViewRef,
   ids,
+  weaponName,
+  power,
+  mastery,
 }: MultiplayerHudProps) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
@@ -89,11 +96,22 @@ export default function MultiplayerHud({
         selfUid={selfUid}
       />
 
-      {/* Health. */}
-      <div className="mp-health" aria-label="Health">
-        {Array.from({ length: maxHp }).map((_, i) => (
-          <span key={i} className={`mp-hp-pip${i < hp ? ' is-full' : ''}`} />
-        ))}
+      {/* Health + loadout (so the gap between a fresh and a leveled player reads). */}
+      <div className="mp-vitals">
+        <div className="mp-health" aria-label="Health">
+          {Array.from({ length: maxHp }).map((_, i) => (
+            <span key={i} className={`mp-hp-pip${i < hp ? ' is-full' : ''}`} />
+          ))}
+        </div>
+        <div className="mp-loadout" aria-label="Loadout">
+          <span className="mp-loadout-weapon">{weaponName}</span>
+          <span className="mp-loadout-pwr">PWR {power % 1 === 0 ? power : power.toFixed(1)}</span>
+          {mastery > 0 && (
+            <span className="mp-loadout-mastery" title={`${mastery} lessons cleared`}>
+              ★{mastery}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mp-crosshair" aria-hidden>

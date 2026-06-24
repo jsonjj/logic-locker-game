@@ -22,6 +22,7 @@ import { type NetEnemy, type NetMeta, type NetPlayer } from '../multiplayer/type
 import { resolveColors } from '../multiplayer/colors'
 import { useInventory } from '../game3d/state/InventoryContext'
 import { GEAR } from '../game3d/systems/gear'
+import { useSectorProgress } from '../sectors/useSectorProgress'
 import ArenaEnvironment from '../multiplayer/ArenaEnvironment'
 import RemotePlayers from '../multiplayer/RemotePlayers'
 import SharedEnemies, { type EnemiesHandle, type LiveEnemy } from '../multiplayer/SharedEnemies'
@@ -45,20 +46,30 @@ export default function MultiplayerArenaPage() {
 function Arena({ code, uid }: { code: string; uid: string }) {
   const navigate = useNavigate()
   const inv = useInventory()
+  // How many single-player lessons (sectors) you've cleared. This is a
+  // GUARANTEED mastery boost — independent of the random reward wheel — so even
+  // an unlucky single-player run still makes you stronger in the arena.
+  const { views } = useSectorProgress()
+  const mastery = useMemo(() => views.filter((v) => v.state === 'cleared').length, [views])
+
   // Carry single-player gear into the arena: equipped ranged weapon (or a
-  // baseline pistol so you're never gun-less), plus bonus HP from armor.
+  // baseline pistol so you're never gun-less), plus bonus HP from armor — then
+  // stack the lessons-earned mastery boost on top.
   const mpWeapon = useMemo<MpWeaponProfile>(() => {
     const w = inv.weapon
     const base = w.weaponKind === 'ranged' ? w : GEAR['plasma-pistol']
+    const dmgBoost = mastery * 0.5
+    const cdScale = Math.max(0.6, 1 - mastery * 0.04)
     return {
-      damage: base.damage ?? 1,
-      range: base.range ?? 13,
-      cooldownMs: base.cooldownMs ?? 360,
+      name: base.name,
+      damage: (base.damage ?? 1) + dmgBoost,
+      range: (base.range ?? 13) + mastery * 0.6,
+      cooldownMs: Math.round((base.cooldownMs ?? 360) * cdScale),
       aoe: base.aoe,
       color: base.color,
     }
-  }, [inv.weapon])
-  const maxHp = MAX_HP + inv.bonusLives
+  }, [inv.weapon, mastery])
+  const maxHp = MAX_HP + inv.bonusLives + Math.floor(mastery / 2)
 
   const playersRef = useRef<Record<string, NetPlayer>>({})
   const enemiesViewRef = useRef<Map<string, LiveEnemy> | null>(null)
@@ -299,6 +310,9 @@ function Arena({ code, uid }: { code: string; uid: string }) {
           playersRef={playersRef}
           enemiesViewRef={enemiesViewRef}
           ids={ids}
+          weaponName={mpWeapon.name}
+          power={mpWeapon.damage}
+          mastery={mastery}
         />
       </GameStateProvider>
 

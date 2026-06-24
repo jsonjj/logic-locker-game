@@ -3,15 +3,53 @@
 /** Half-width of the square arena floor (world units). */
 export const ARENA_HALF = 22
 
-/** How many enemies the host keeps alive at once. */
-export const TARGET_ALIVE = 10
+/** How many enemies the host keeps alive at once (round 1 baseline). */
+export const TARGET_ALIVE = 16
 
-/** Seconds between enemy spawns while under the target count. */
-export const SPAWN_EVERY = 1.0
+/** Seconds between enemy spawns while under the target count (round 1). */
+export const SPAWN_EVERY = 0.5
 
 /** Enemy chase speed (m/s) and starting hit points. */
 export const ENEMY_SPEED = 2.4
 export const ENEMY_HP = 3
+
+// --- Round-scaled horde --------------------------------------------------
+// The arena gets dramatically busier every round: more enemies alive at once,
+// spawning faster, and a touch tougher. This is what makes a strong loadout
+// (and lessons-earned mastery) actually matter in the later rounds.
+export const ALIVE_PER_ROUND = 9
+export const MAX_ALIVE = 60
+export const SPAWN_MIN = 0.16
+
+/** Concurrent enemy cap for round `round` (1-based). */
+export function aliveTargetForRound(round: number): number {
+  return Math.min(MAX_ALIVE, TARGET_ALIVE + Math.max(0, round - 1) * ALIVE_PER_ROUND)
+}
+/** Spawn cadence (seconds) for round `round` — quickens as rounds climb. */
+export function spawnEveryForRound(round: number): number {
+  return Math.max(SPAWN_MIN, SPAWN_EVERY - Math.max(0, round - 1) * 0.06)
+}
+/** Enemy hit points for round `round` — creeps up slowly so guns must keep up. */
+export function enemyHpForRound(round: number): number {
+  return ENEMY_HP + Math.floor(Math.max(0, round - 1) / 2)
+}
+
+// --- Armed enemies (they shoot back) -------------------------------------
+/** Fraction of spawned enemies that carry guns (30–50%). */
+export const RANGED_FRACTION = 0.4
+/** How far an armed enemy can open fire (world units). */
+export const ENEMY_SHOOT_RANGE = 17
+/** Below this distance, melee contact damage handles it — don't also shoot. */
+export const ENEMY_MIN_SHOOT_DIST = 3.2
+/** Seconds between an armed enemy's shots, plus up to JITTER extra. */
+export const ENEMY_SHOOT_COOLDOWN = 2.4
+export const ENEMY_SHOOT_JITTER = 1.3
+/** Projectile travel speed (m/s) and the damage / hit radius on the player. */
+export const ENEMY_PROJECTILE_SPEED = 13
+export const ENEMY_PROJECTILE_DMG = 1
+export const ENEMY_PROJECTILE_HIT_RADIUS = 0.85
+/** Only the nearest N armed enemies actively shoot you (fairness + perf). */
+export const ENEMY_MAX_SHOOTERS = 5
 
 /** Host broadcasts enemy state at ~10Hz. */
 export const ENEMY_NET_INTERVAL = 0.1

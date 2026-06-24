@@ -11,12 +11,13 @@ import { Vector3, type Group } from 'three'
 import { useGameState } from '../game3d/state/GameStateContext'
 import {
   ARENA_HALF,
-  ENEMY_HP,
   ENEMY_NET_INTERVAL,
   ENEMY_SPEED,
-  SPAWN_EVERY,
-  TARGET_ALIVE,
   AIM_CONE,
+  RANGED_FRACTION,
+  aliveTargetForRound,
+  spawnEveryForRound,
+  enemyHpForRound,
 } from './arena'
 import {
   writeEnemies,
@@ -71,6 +72,9 @@ const SharedEnemies = forwardRef<EnemiesHandle, SharedEnemiesProps>(function Sha
   const nextId = useRef(0)
   const spawnAcc = useRef(0)
   const netAcc = useRef(0)
+  // Current round (drives population + difficulty scaling).
+  const roundRef = useRef(roundKey ?? 1)
+  roundRef.current = roundKey ?? 1
 
   // Keep the rendered id list in sync with whichever table is the source.
   function syncIds(source: Map<string, LiveEnemy>) {
@@ -168,10 +172,12 @@ const SharedEnemies = forwardRef<EnemiesHandle, SharedEnemiesProps>(function Sha
 
     if (isHost) {
       if (playing) {
-        // Spawn up to the target count.
+        // Spawn up to the round's target count, at the round's cadence.
+        const target = aliveTargetForRound(roundRef.current)
+        const every = spawnEveryForRound(roundRef.current)
         spawnAcc.current += dt
-        while (enemies.current.size < TARGET_ALIVE && spawnAcc.current >= SPAWN_EVERY) {
-          spawnAcc.current -= SPAWN_EVERY
+        while (enemies.current.size < target && spawnAcc.current >= every) {
+          spawnAcc.current -= every
           spawnOne()
         }
         // Targets: every player position (local + remotes).
@@ -255,7 +261,9 @@ const SharedEnemies = forwardRef<EnemiesHandle, SharedEnemiesProps>(function Sha
           : edge === 2
             ? { x: -ARENA_HALF + 2, z: along }
             : { x: ARENA_HALF - 2, z: along }
-    enemies.current.set(id, { x: pos.x, z: pos.z, hp: ENEMY_HP, maxHp: ENEMY_HP, kind: 'melee' })
+    const hp = enemyHpForRound(roundRef.current)
+    const kind: LiveEnemy['kind'] = Math.random() < RANGED_FRACTION ? 'ranged' : 'melee'
+    enemies.current.set(id, { x: pos.x, z: pos.z, hp, maxHp: hp, kind })
     syncIds(enemies.current)
   }
 
@@ -272,12 +280,20 @@ function EnemyMesh({ getData }: { getData: () => LiveEnemy | undefined }) {
   const group = useRef<Group>(null)
   const bar = useRef<Group>(null)
   const fill = useRef<Group>(null)
+  const gun = useRef<Group>(null)
+  const [armed, setArmed] = useState(false)
+  const knownKind = useRef<LiveEnemy['kind'] | null>(null)
 
   useFrame(() => {
     const d = getData()
     const g = group.current
     if (!d || !g) return
     g.position.set(d.x, 0, d.z)
+    // Latch the kind once it's known (guests learn it from the snapshot).
+    if (knownKind.current !== d.kind) {
+      knownKind.current = d.kind
+      setArmed(d.kind === 'ranged')
+    }
     if (fill.current) {
       const f = Math.max(0, Math.min(1, d.hp / d.maxHp))
       fill.current.scale.x = f
@@ -285,24 +301,42 @@ function EnemyMesh({ getData }: { getData: () => LiveEnemy | undefined }) {
     }
   })
 
+  // Armed guards read as steel-blue with a muzzle glow; melee stay blood-red.
+  const bodyColor = armed ? '#2f5d8c' : '#8c2f33'
+  const headColor = armed ? '#4a86c0' : '#c0494b'
+  const eyeColor = armed ? '#6cf0ff' : '#ffd84a'
+
   return (
     <group ref={group}>
       {/* Body */}
       <mesh castShadow position={[0, 0.95, 0]}>
         <capsuleGeometry args={[0.34, 0.7, 4, 10]} />
-        <meshStandardMaterial color="#8c2f33" roughness={0.85} />
+        <meshStandardMaterial color={bodyColor} roughness={0.85} />
       </mesh>
       <mesh position={[0, 1.55, 0]}>
         <sphereGeometry args={[0.26, 12, 12]} />
-        <meshStandardMaterial color="#c0494b" roughness={0.7} />
+        <meshStandardMaterial color={headColor} roughness={0.7} />
       </mesh>
       {/* Glowing eyes */}
       {[-0.1, 0.1].map((x) => (
         <mesh key={x} position={[x, 1.58, 0.22]}>
           <sphereGeometry args={[0.04, 8, 8]} />
-          <meshStandardMaterial color="#ffd84a" emissive="#ffd84a" emissiveIntensity={1.6} />
+          <meshStandardMaterial color={eyeColor} emissive={eyeColor} emissiveIntensity={1.6} />
         </mesh>
       ))}
+      {/* Gun — only on armed guards, so you can see at a glance who shoots. */}
+      {armed && (
+        <group ref={gun} position={[0.32, 1.0, 0.32]}>
+          <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.22]}>
+            <cylinderGeometry args={[0.06, 0.06, 0.6, 8]} />
+            <meshStandardMaterial color="#1b2026" roughness={0.5} metalness={0.6} />
+          </mesh>
+          <mesh position={[0, 0, 0.54]}>
+            <sphereGeometry args={[0.08, 10, 10]} />
+            <meshStandardMaterial color="#6cf0ff" emissive="#6cf0ff" emissiveIntensity={2} />
+          </mesh>
+        </group>
+      )}
       {/* Health bar (camera bearing is fixed, so a static facing reads fine). */}
       <group ref={bar} position={[0, 2.15, 0]}>
         <mesh>

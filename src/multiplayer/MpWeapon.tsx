@@ -6,6 +6,7 @@ import type { EnemiesHandle } from './SharedEnemies'
 
 /** Weapon profile the arena derives from the player's equipped gear. */
 export interface MpWeaponProfile {
+  name: string
   damage: number
   range: number
   cooldownMs: number
@@ -108,12 +109,20 @@ export default function MpWeapon({ code, uid, isHost, playing, handle, weapon }:
   }, [tracer])
 
   if (!tracer) return null
+  // Stronger guns fire visibly thicker, brighter beams so power reads at a glance.
+  const thick = 0.05 + Math.min(0.22, (weapon.damage - 1) * 0.05)
   return (
     <group position={[tracer.x, 1.1, tracer.z]} rotation={[0, tracer.heading, 0]}>
       <mesh position={[0, 0, tracer.len / 2]}>
-        <boxGeometry args={[0.05, 0.05, tracer.len]} />
-        <meshStandardMaterial color={weapon.color} emissive={weapon.color} emissiveIntensity={2.2} />
+        <boxGeometry args={[thick, thick, tracer.len]} />
+        <meshStandardMaterial color={weapon.color} emissive={weapon.color} emissiveIntensity={2.6} />
       </mesh>
+      {weapon.aoe ? (
+        <mesh position={[0, 0, tracer.len]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[weapon.aoe * 0.5, weapon.aoe, 28]} />
+          <meshStandardMaterial color={weapon.color} emissive={weapon.color} emissiveIntensity={2} transparent opacity={0.5} />
+        </mesh>
+      ) : null}
     </group>
   )
 }

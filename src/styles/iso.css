@@ -1,0 +1,240 @@
+/* ============================================================
+   Logic Locker: Lockdown — 2.5D isometric render layer (Agent A)
+   Pure CSS/SVG depth illusion. No WebGL, no 3D transforms in the
+   render loop — just transforms + gradients so it stays smooth on
+   low-end school laptops and tablets.
+   ============================================================ */
+
+/* ---------- Stage ---------- *
+   .iso-stage is layered ON TOP of the existing .game-stage so it reuses the
+   same sizing/aspect conventions. It only repaints the fortress interior. */
+.iso-stage {
+  background-color: var(--ll-stone-900, #14171d);
+  background-image:
+    radial-gradient(120% 90% at 50% -10%, rgba(122, 60, 240, 0.16), transparent 55%),
+    linear-gradient(180deg, var(--ll-stone-800, #1c2129) 0%, var(--ll-stone-900, #14171d) 100%);
+  color: var(--ll-ink, #eef2f7);
+  --iso-accent: var(--ll-amber, #f5a524);
+}
+
+.iso-stage.variant-corridor {
+  --iso-accent: var(--ll-amber, #f5a524);
+}
+.iso-stage.variant-cell {
+  --iso-accent: var(--ll-iron-light, #8b97a8);
+}
+.iso-stage.variant-vault {
+  --iso-accent: var(--ll-warden, #7a3cf0);
+}
+
+/* ---------- Walls (depth framing) ---------- */
+.iso-walls {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Back wall band with riveted stone + warning stripe at the base. */
+.iso-wall-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 26%;
+  background:
+    linear-gradient(180deg, var(--ll-stone-700, #262d38) 0%, var(--ll-stone-800, #1c2129) 100%);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 -10px 22px rgba(0, 0, 0, 0.55);
+}
+
+/* Faint masonry seams on the back wall. */
+.iso-wall-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 30px);
+  opacity: 0.7;
+}
+
+/* Hazard stripe running along the foot of the back wall. */
+.iso-wall-back::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 7px;
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--ll-amber-deep, #c77b10) 0 10px,
+    rgba(0, 0, 0, 0.85) 10px 20px
+  );
+  opacity: 0.55;
+}
+
+/* Slanted side walls (left/right) to frame the diamond floor. */
+.iso-wall-side {
+  position: absolute;
+  top: 24%;
+  width: 16%;
+  height: 64%;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+}
+.iso-wall-side.left {
+  left: 0;
+  clip-path: polygon(0 0, 100% 18%, 100% 100%, 0 82%);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
+}
+.iso-wall-side.right {
+  right: 0;
+  clip-path: polygon(0 18%, 100% 0, 100% 82%, 0 100%);
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
+}
+
+/* ---------- Floor (diamond plane + iso grid) ---------- */
+.iso-floor {
+  position: absolute;
+  left: 50%;
+  top: 51%;
+  width: 62%;
+  aspect-ratio: 1;
+  z-index: 0;
+  /* rotate into the diamond, then squash to the dimetric tilt.
+     scaleY chosen so anisotropic stage-% lines up with projection.ts. */
+  transform: translate(-50%, -50%) rotate(45deg) scaleY(0.355);
+  transform-origin: center;
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, var(--ll-stone-600, #333c4a) 0%, var(--ll-stone-700, #262d38) 100%);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.4),
+    inset 0 0 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Grid scored into the floor. Lives un-rotated inside the rotated parent. */
+.iso-floor-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 10%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 10%);
+  mix-blend-mode: screen;
+}
+
+/* Glowing seam at the front edge of the floor for a touch of rim light. */
+.iso-floor-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--iso-accent) 22%, transparent);
+}
+
+/* ---------- Ambient vignette ---------- */
+.iso-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 38%, transparent 52%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* ---------- Pursuer danger glow (driven by `danger` 0..1) ---------- */
+.iso-danger {
+  position: absolute;
+  inset: 0;
+  z-index: 41;
+  pointer-events: none;
+  opacity: var(--iso-danger, 0);
+  background:
+    radial-gradient(140% 90% at 50% 108%, color-mix(in srgb, var(--ll-alarm, #e5484d) 70%, transparent), transparent 60%);
+  box-shadow: inset 0 0 90px color-mix(in srgb, var(--ll-alarm, #e5484d) 60%, transparent);
+  transition: opacity 0.25s ease;
+  animation: isoDangerPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes isoDangerPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
+}
+
+/* ---------- Children / entity layer ---------- */
+.iso-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+}
+
+.iso-entity {
+  position: absolute;
+  /* anchor the entity's feet on the projected point */
+  transform: translate(-50%, -100%);
+  will-change: left, top;
+  pointer-events: none;
+}
+
+/* Soft ground shadow under each entity. */
+.iso-shadow {
+  position: absolute;
+  width: 46px;
+  height: 18px;
+  transform: translate(-50%, -50%) scaleY(0.5);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+
+/* ---------- Static iso props (walls/crates as entities) ---------- */
+.iso-block {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.iso-block-top {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 64px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--ll-stone-500, #475263), var(--ll-stone-700, #262d38));
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08);
+}
+
+.iso-block-rivets {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background-image: radial-gradient(circle at 8px 8px, rgba(255, 255, 255, 0.18) 0 2px, transparent 2px),
+    radial-gradient(circle at calc(100% - 8px) 8px, rgba(255, 255, 255, 0.18) 0 2px, transparent 2px),
+    radial-gradient(circle at 8px calc(100% - 8px), rgba(255, 255, 255, 0.18) 0 2px, transparent 2px),
+    radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), rgba(255, 255, 255, 0.18) 0 2px, transparent 2px);
+}
+
+/* ---------- Demo harness ---------- */
+.iso-demo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.iso-demo-caption {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ll-ink-dim, #aab4c2);
+  text-align: center;
+  max-width: 640px;
+}
+
+/* ---------- Motion preferences ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .iso-danger {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,402 @@
+/* ============================================================
+   Logic Locker: Lockdown — fortress sector map / level select
+   Owned by Agent C. Styles the blueprint floor-plan, the inward
+   corridor path, and the locked / unlocked / cleared sector nodes.
+   ============================================================ */
+
+.ll-map {
+  min-height: 100vh;
+  padding: clamp(16px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ---------- Header ---------- */
+.ll-map__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ll-map__kicker {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ll-amber);
+  font-weight: 700;
+}
+
+.ll-map__title {
+  margin: 2px 0 0;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ll-ink);
+}
+
+.ll-map__meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ll-map__leaderboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ll-panel-line-strong);
+  background: var(--ll-panel);
+  color: var(--ll-ink);
+  font-weight: 600;
+  font-size: 0.86rem;
+  text-decoration: none;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+
+.ll-map__leaderboard:hover {
+  border-color: var(--ll-amber);
+  transform: translateY(-1px);
+}
+
+.ll-map__player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px 7px 8px;
+  border-radius: 999px;
+  background: var(--ll-panel);
+  border: 1px solid var(--ll-panel-line);
+}
+
+.ll-map__player-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.ll-map__player-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ll-ink);
+}
+
+.ll-map__progress {
+  font-size: 0.74rem;
+  color: var(--ll-ink-dim);
+}
+
+/* ---------- Top progress bar ---------- */
+.ll-map__progressbar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ll-stone-700);
+  overflow: hidden;
+  border: 1px solid var(--ll-panel-line);
+}
+
+.ll-map__progressbar-fill {
+  display: block;
+  height: 100%;
+  background: var(--ll-grad-amber);
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Blueprint stage ---------- */
+.ll-map__stage {
+  position: relative;
+  flex: 1;
+  min-height: 560px;
+  border-radius: 18px;
+  border: 1px solid var(--ll-panel-line-strong);
+  overflow: hidden;
+  background-color: var(--ll-stone-800);
+  background-image:
+    radial-gradient(120% 90% at 80% 100%, rgba(122, 60, 240, 0.16), transparent 55%),
+    radial-gradient(90% 70% at 4% 4%, rgba(245, 165, 36, 0.12), transparent 50%),
+    linear-gradient(rgba(139, 151, 168, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 151, 168, 0.07) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 38px 38px, 38px 38px;
+  box-shadow: var(--ll-shadow), var(--ll-shadow-inset);
+}
+
+/* ---------- Corridor path ---------- */
+.ll-map__corridor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ll-map__corridor-base {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.ll-map__corridor-line {
+  fill: none;
+  stroke: var(--ll-brass);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 3 5;
+  opacity: 0.7;
+  vector-effect: non-scaling-stroke;
+  animation: ll-corridor-flow 1.4s linear infinite;
+}
+
+@keyframes ll-corridor-flow {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+/* ---------- Exit & Akash markers ---------- */
+.ll-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  text-align: center;
+}
+
+.ll-marker__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ll-iron-light);
+  box-shadow: 0 0 0 4px rgba(139, 151, 168, 0.18);
+}
+
+.ll-marker__dot--akash {
+  background: var(--ll-amber);
+  box-shadow: 0 0 0 5px rgba(245, 165, 36, 0.22);
+  animation: ll-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes ll-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 5px rgba(245, 165, 36, 0.22);
+  }
+  50% {
+    box-shadow: 0 0 0 11px rgba(245, 165, 36, 0.05);
+  }
+}
+
+.ll-marker__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ll-ink-dim);
+  background: var(--ll-panel);
+  border: 1px solid var(--ll-panel-line);
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.ll-marker__label--akash {
+  color: var(--ll-amber);
+  border-color: var(--ll-amber-deep);
+}
+
+/* ---------- Sector nodes ---------- */
+.ll-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: min(240px, 40vw);
+  display: flex;
+  gap: 11px;
+  text-align: left;
+  padding: 12px 13px;
+  border-radius: 14px;
+  border: 1px solid var(--ll-panel-line-strong);
+  background: var(--ll-panel);
+  color: var(--ll-ink);
+  cursor: pointer;
+  font: inherit;
+  backdrop-filter: blur(3px);
+  box-shadow: var(--ll-shadow);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  z-index: 2;
+}
+
+.ll-node:hover {
+  transform: translate(-50%, calc(-50% - 3px));
+}
+
+.ll-node:focus-visible {
+  outline: 2px solid var(--ll-amber);
+  outline-offset: 2px;
+}
+
+.ll-node__badge {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.ll-node__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ll-node__name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.ll-node__blurb {
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--ll-ink-dim);
+}
+
+.ll-node__cta {
+  margin-top: 2px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--ll-amber);
+}
+
+.ll-node__cta--locked {
+  color: var(--ll-iron-light);
+}
+
+/* State: unlocked */
+.ll-node--unlocked {
+  border-color: var(--ll-amber-deep);
+}
+.ll-node--unlocked .ll-node__badge {
+  background: var(--ll-grad-amber);
+  color: var(--ll-stone-900);
+}
+.ll-node--unlocked:hover {
+  border-color: var(--ll-amber);
+  box-shadow: 0 12px 32px rgba(245, 165, 36, 0.22);
+}
+
+/* State: cleared */
+.ll-node--cleared {
+  border-color: var(--ll-clear-deep);
+}
+.ll-node--cleared .ll-node__badge {
+  background: linear-gradient(135deg, var(--ll-clear) 0%, var(--ll-clear-deep) 100%);
+  color: var(--ll-stone-900);
+}
+.ll-node--cleared:hover {
+  border-color: var(--ll-clear);
+  box-shadow: 0 12px 32px rgba(47, 185, 120, 0.22);
+}
+
+/* State: locked */
+.ll-node--locked {
+  cursor: not-allowed;
+  opacity: 0.62;
+  filter: saturate(0.6);
+}
+.ll-node--locked .ll-node__badge {
+  background: var(--ll-stone-600);
+  color: var(--ll-iron-light);
+}
+.ll-node--locked:hover {
+  transform: translate(-50%, -50%);
+}
+
+.ll-node.is-shaking {
+  animation: ll-shake 0.42s ease;
+}
+
+@keyframes ll-shake {
+  0%, 100% { transform: translate(-50%, -50%); }
+  20% { transform: translate(calc(-50% - 5px), -50%); }
+  40% { transform: translate(calc(-50% + 5px), -50%); }
+  60% { transform: translate(calc(-50% - 3px), -50%); }
+  80% { transform: translate(calc(-50% + 3px), -50%); }
+}
+
+/* ---------- Stars ---------- */
+.ll-stars {
+  display: inline-flex;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.ll-star {
+  fill: var(--ll-stone-500);
+}
+
+.ll-star.is-filled {
+  fill: var(--ll-amber);
+}
+
+/* ---------- Loading + toast ---------- */
+.ll-map__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--ll-ink-dim);
+  background: rgba(20, 23, 29, 0.55);
+  z-index: 5;
+}
+
+.ll-map__toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  padding: 11px 18px;
+  border-radius: 10px;
+  background: var(--ll-grad-alarm);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.86rem;
+  box-shadow: var(--ll-shadow);
+  z-index: 20;
+  animation: ll-toast-in 0.22s ease;
+}
+
+@keyframes ll-toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 720px) {
+  .ll-map__stage {
+    min-height: 720px;
+  }
+  .ll-node {
+    width: min(220px, 70vw);
+  }
+  .ll-node__blurb {
+    display: none;
+  }
+}

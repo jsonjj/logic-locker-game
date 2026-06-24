@@ -1,0 +1,165 @@
+/* ============================================================
+   Logic Locker: Breakout — 3D layer base styles (integrator-owned).
+   DOM overlays that sit on top of the R3F <Canvas>. Agents add polish in
+   their own css files (e.g. hud3d.css) to avoid edit collisions here.
+   ============================================================ */
+
+.world-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #0e1116;
+}
+
+/* ---- HUD ---- */
+.hud3d {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hud3d > * {
+  pointer-events: auto;
+}
+
+.hud3d-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+}
+
+.hud3d-objective {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(12, 15, 22, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f3f5f8;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+}
+
+.hud3d-objective-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f5a524;
+  box-shadow: 0 0 10px #f5a524;
+}
+
+.hud3d-top-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud3d-interact {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #15171d;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ---- Focused overlays (puzzle / classroom / menu) ---- */
+.puzzle-overlay,
+.classroom-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(8, 10, 15, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.puzzle-card,
+.classroom-card {
+  width: 100%;
+  max-width: 520px;
+  background: #161b22;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  color: #eef1f5;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.puzzle-actions,
+.classroom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.classroom-kicker {
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #9aa6b6;
+  margin-bottom: 6px;
+}
+
+.game-menu-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 10, 15, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.game-menu-card {
+  width: 100%;
+  max-width: 340px;
+  background: #161b22;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  color: #eef1f5;
+  text-align: center;
+}
+
+.game-menu-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-danger {
+  background: #c0392b;
+  color: #fff;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: #a93226;
+}
+
+/* Loading fallback while the canvas/physics warm up */
+.world-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #9aa6b6;
+  z-index: 5;
+}

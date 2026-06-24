@@ -1,0 +1,783 @@
+/* ============================================================
+   Logic Locker: Breakout — Agent 3 interactive puzzle scenes.
+   Focused DOM overlay devices themed as prison security hardware.
+   Premium, restrained-gradient "control-room" look. Scoped with .p3-*.
+   ============================================================ */
+
+.p3-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(63, 94, 251, 0.18), transparent 60%),
+    rgba(6, 8, 13, 0.72);
+  backdrop-filter: blur(6px);
+  --p3-accent: #5b8cff;
+  --p3-good: #2fd27b;
+  --p3-warn: #f5a524;
+  --p3-bad: #ff5d6c;
+  --p3-ink: #eaf0fb;
+  --p3-muted: #93a0b6;
+  --p3-line: rgba(255, 255, 255, 0.1);
+  --p3-panel: #121722;
+  color: var(--p3-ink);
+}
+
+.p3-frame {
+  width: 100%;
+  max-width: 660px;
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(28, 36, 52, 0.92), rgba(15, 19, 28, 0.96));
+  border: 1px solid var(--p3-line);
+  border-radius: 18px;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+.p3-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--p3-line);
+  background: linear-gradient(180deg, rgba(91, 140, 255, 0.12), transparent);
+}
+
+.p3-header-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.p3-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--p3-accent);
+}
+
+.p3-kicker::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--p3-accent);
+  box-shadow: 0 0 12px var(--p3-accent);
+}
+
+.p3-title {
+  margin: 4px 0 2px;
+  font-size: 1.18rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.p3-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--p3-muted);
+}
+
+.p3-meta {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.p3-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 58px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--p3-line);
+}
+
+.p3-chip-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 1.02rem;
+}
+
+.p3-chip-label {
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--p3-muted);
+}
+
+.p3-chip.is-alert .p3-chip-num {
+  color: var(--p3-bad);
+}
+
+/* ---- 3D inset ---- */
+.p3-inset {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--p3-line);
+  background: radial-gradient(circle at 50% 35%, rgba(91, 140, 255, 0.25), #0a0d14);
+}
+
+/* ---- Scrollable body ---- */
+.p3-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+}
+
+/* ---- Route selection ---- */
+.p3-routes-intro {
+  margin: 0 0 16px;
+  color: var(--p3-muted);
+  font-size: 0.9rem;
+}
+
+.p3-routes {
+  display: grid;
+  gap: 12px;
+}
+
+.p3-route-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--p3-line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.p3-route-card:hover,
+.p3-route-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--p3-accent);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
+  outline: none;
+}
+
+.p3-route-glyph {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  font-size: 1.3rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--p3-line);
+}
+
+.p3-route-name {
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 3px;
+}
+
+.p3-route-blurb {
+  font-size: 0.83rem;
+  color: var(--p3-muted);
+  line-height: 1.35;
+}
+
+.p3-risk {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.p3-risk.fast {
+  color: #ffd2a8;
+  background: rgba(245, 165, 36, 0.16);
+  border: 1px solid rgba(245, 165, 36, 0.4);
+}
+
+.p3-risk.balanced {
+  color: #bcd0ff;
+  background: rgba(91, 140, 255, 0.16);
+  border: 1px solid rgba(91, 140, 255, 0.4);
+}
+
+.p3-risk.safe {
+  color: #b5f0d2;
+  background: rgba(47, 210, 123, 0.14);
+  border: 1px solid rgba(47, 210, 123, 0.38);
+}
+
+.p3-route-foot {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--p3-muted);
+  letter-spacing: 0.4px;
+}
+
+/* ---- Device shell ---- */
+.p3-device {
+  display: grid;
+  gap: 14px;
+}
+
+.p3-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--p3-muted);
+}
+
+.p3-progress-track {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.p3-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--p3-accent), var(--p3-good));
+  transition: width 0.3s ease;
+}
+
+.p3-prompt {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.p3-clues {
+  margin: 0;
+  padding: 12px 14px 12px 30px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid var(--p3-line);
+  font-size: 0.84rem;
+  color: #d4def0;
+}
+
+.p3-clues li {
+  margin: 3px 0;
+}
+
+.p3-clues-title {
+  list-style: none;
+  margin-left: -16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 0.66rem;
+  color: var(--p3-muted);
+}
+
+/* ---- Override console (choices) ---- */
+.p3-options {
+  display: grid;
+  gap: 10px;
+}
+
+.p3-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 13px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--p3-line);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.92rem;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.1s ease;
+}
+
+.p3-option:hover:not(:disabled),
+.p3-option:focus-visible:not(:disabled) {
+  border-color: var(--p3-accent);
+  background: rgba(91, 140, 255, 0.1);
+  outline: none;
+}
+
+.p3-option:disabled {
+  cursor: default;
+}
+
+.p3-option.correct {
+  border-color: var(--p3-good);
+  background: rgba(47, 210, 123, 0.14);
+}
+
+.p3-option.wrong {
+  border-color: var(--p3-bad);
+  background: rgba(255, 93, 108, 0.12);
+  animation: p3-shake 0.32s ease;
+}
+
+.p3-option-key {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.35);
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--p3-muted);
+}
+
+/* ---- Evidence locker (clue sort) ---- */
+.p3-cards {
+  display: grid;
+  gap: 10px;
+}
+
+.p3-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--p3-line);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.p3-card.wrong {
+  border-color: var(--p3-bad);
+  animation: p3-shake 0.32s ease;
+}
+
+.p3-card.locked {
+  border-color: var(--p3-good);
+}
+
+.p3-card-text {
+  font-size: 0.9rem;
+  margin-bottom: 9px;
+}
+
+.p3-bins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.p3-bin {
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--p3-line);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--p3-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.13s ease;
+}
+
+.p3-bin:hover:not(:disabled) {
+  border-color: var(--p3-accent);
+  color: var(--p3-ink);
+}
+
+.p3-bin.active {
+  border-color: var(--p3-accent);
+  background: rgba(91, 140, 255, 0.18);
+  color: var(--p3-ink);
+}
+
+/* ---- Deduction terminal (grid) ---- */
+.p3-grid-wrap {
+  overflow-x: auto;
+}
+
+.p3-grid {
+  border-collapse: separate;
+  border-spacing: 4px;
+  margin: 0 auto;
+}
+
+.p3-grid th {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--p3-muted);
+  padding: 4px 6px;
+  white-space: nowrap;
+}
+
+.p3-grid th.row-head {
+  text-align: right;
+}
+
+.p3-cell {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid var(--p3-line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--p3-ink);
+  font-size: 1.3rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.1s ease;
+}
+
+.p3-cell:hover:not(:disabled) {
+  border-color: var(--p3-accent);
+}
+
+.p3-cell:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.p3-cell.check {
+  color: var(--p3-good);
+  background: rgba(47, 210, 123, 0.12);
+}
+
+.p3-cell.x {
+  color: var(--p3-bad);
+}
+
+.p3-cell.target {
+  border-color: var(--p3-accent);
+  box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.4);
+}
+
+.p3-cell.wrong {
+  animation: p3-shake 0.32s ease;
+  border-color: var(--p3-bad);
+}
+
+/* ---- Logic gate panel (switches) ---- */
+.p3-gate {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--p3-line);
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.p3-gate-formula {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #cdd9f0;
+}
+
+.p3-gate-formula b {
+  color: var(--p3-accent);
+  letter-spacing: 1px;
+}
+
+.p3-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.p3-switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--p3-line);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  cursor: pointer;
+  min-width: 96px;
+  transition: border-color 0.14s ease;
+}
+
+.p3-switch:hover {
+  border-color: var(--p3-accent);
+}
+
+.p3-switch-track {
+  width: 46px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  position: relative;
+  transition: background 0.18s ease;
+}
+
+.p3-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #c4ccda;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.p3-switch.on .p3-switch-track {
+  background: rgba(47, 210, 123, 0.5);
+}
+
+.p3-switch.on .p3-switch-knob {
+  transform: translateX(22px);
+  background: var(--p3-good);
+}
+
+.p3-switch-label {
+  font-size: 0.78rem;
+  text-align: center;
+  color: #d4def0;
+}
+
+.p3-lamp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.p3-lamp-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a5163;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.p3-lamp.open .p3-lamp-dot {
+  background: var(--p3-good);
+  box-shadow: 0 0 16px var(--p3-good);
+}
+
+.p3-lamp.open {
+  color: var(--p3-good);
+}
+
+/* ---- Wiring / sequence panel (ordering) ---- */
+.p3-seq {
+  display: grid;
+  gap: 9px;
+  counter-reset: p3wire;
+}
+
+.p3-seq-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--p3-line);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.p3-seq-item.wrong {
+  border-color: var(--p3-bad);
+  animation: p3-shake 0.32s ease;
+}
+
+.p3-seq-item.locked {
+  border-color: var(--p3-good);
+}
+
+.p3-seq-rank {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(91, 140, 255, 0.18);
+  color: var(--p3-accent);
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+
+.p3-seq-text {
+  flex: 1;
+  font-size: 0.88rem;
+}
+
+.p3-seq-moves {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.p3-seq-move {
+  width: 26px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  border: 1px solid var(--p3-line);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--p3-ink);
+  cursor: pointer;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.p3-seq-move:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ---- Feedback line ---- */
+.p3-feedback {
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 11px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  border: 1px solid var(--p3-line);
+}
+
+.p3-feedback.good {
+  color: #c7f5dd;
+  background: rgba(47, 210, 123, 0.12);
+  border-color: rgba(47, 210, 123, 0.4);
+}
+
+.p3-feedback.bad {
+  color: #ffd2d7;
+  background: rgba(255, 93, 108, 0.1);
+  border-color: rgba(255, 93, 108, 0.36);
+}
+
+.p3-feedback.hint {
+  color: #ffe6bd;
+  background: rgba(245, 165, 36, 0.1);
+  border-color: rgba(245, 165, 36, 0.34);
+}
+
+.p3-hint-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.p3-hint-list li {
+  margin: 3px 0;
+}
+
+/* ---- Footer / actions ---- */
+.p3-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--p3-line);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.p3-footer .spacer {
+  flex: 1;
+}
+
+.p3-btn {
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--p3-line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--p3-ink);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.14s ease, border-color 0.14s ease, opacity 0.14s ease;
+}
+
+.p3-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.p3-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.p3-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.p3-btn.primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--p3-accent), #7a5cff);
+  color: #fff;
+}
+
+.p3-btn.primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6f9bff, #8b6dff);
+}
+
+.p3-btn.ghost {
+  background: transparent;
+}
+
+.p3-btn.success {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--p3-good), #1faf63);
+  color: #06150d;
+}
+
+.p3-btn-hint {
+  font-size: 0.8rem;
+  color: var(--p3-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+@keyframes p3-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p3-route-card,
+  .p3-option,
+  .p3-cell,
+  .p3-btn,
+  .p3-switch-knob,
+  .p3-switch-track,
+  .p3-progress-fill {
+    transition: none;
+  }
+
+  .p3-option.wrong,
+  .p3-card.wrong,
+  .p3-cell.wrong,
+  .p3-seq-item.wrong {
+    animation: none;
+  }
+}

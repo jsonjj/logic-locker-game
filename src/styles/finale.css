@@ -1,0 +1,160 @@
+.finale-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(20, 26, 40, 0.85), rgba(4, 6, 12, 0.96));
+  animation: finale-fade 0.6s ease both;
+}
+
+@keyframes finale-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.finale-card {
+  width: min(560px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  text-align: center;
+  padding: 30px 28px 26px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(26, 32, 46, 0.96), rgba(14, 18, 28, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  color: #eef2fa;
+}
+
+.finale-escape {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 22px;
+  color: #c8d2e6;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.finale-escape p {
+  margin: 0;
+  animation: finale-line 0.7s ease both;
+}
+
+.finale-escape p:nth-child(2) {
+  animation-delay: 0.5s;
+  font-style: italic;
+  color: #ffd27a;
+}
+
+.finale-escape p:nth-child(3) {
+  animation-delay: 1s;
+}
+
+@keyframes finale-line {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.finale-end-title {
+  font-size: 2.6rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  background-image: linear-gradient(180deg, #ffe9b0, #ffb347);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-top: 8px;
+}
+
+.finale-sub {
+  margin: 4px 0 18px;
+  color: #9fb0c6;
+  font-size: 0.9rem;
+}
+
+.finale-stats {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 auto 22px;
+  font-size: 0.95rem;
+}
+
+.finale-stats td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  color: #d7deec;
+}
+
+.finale-stats td:last-child {
+  text-align: right;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.finale-stats .finale-score-row td {
+  border-bottom: none;
+  font-size: 1.15rem;
+  padding-top: 14px;
+}
+
+.finale-stats .finale-score-row td:last-child {
+  color: #ffd27a;
+}
+
+.finale-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.finale-fuse {
+  position: fixed;
+  top: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1400;
+  text-align: center;
+  pointer-events: none;
+  animation: finale-fuse-pulse 1s ease-in-out infinite;
+}
+
+.finale-fuse-num {
+  font-size: 5rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ff5a48;
+  text-shadow: 0 0 24px rgba(255, 60, 40, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.finale-fuse-label {
+  margin-top: 4px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #ffd27a;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+@keyframes finale-fuse-pulse {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.12);
+  }
+}

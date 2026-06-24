@@ -74,32 +74,34 @@
   isolation: isolate;
 }
 
-/* Top-down floor: tiled boards + soft vignette. */
+/* Top-down floor: riveted fortress stone + soft vignette. */
 .floor-room {
-  background-color: #2b2540;
+  background-color: var(--ll-stone-800, #1c2129);
   background-image:
-    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.08), transparent 60%),
-    radial-gradient(140% 120% at 50% 120%, rgba(0, 0, 0, 0.45), transparent 55%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 2px, transparent 2px 46px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 2px, transparent 2px 46px);
+    radial-gradient(120% 90% at 50% 0%, rgba(245, 165, 36, 0.08), transparent 60%),
+    radial-gradient(140% 120% at 50% 120%, rgba(0, 0, 0, 0.5), transparent 55%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 2px, transparent 2px 46px);
 }
 
 .floor-hall {
-  background-color: #221d35;
+  background-color: var(--ll-stone-900, #14171d);
   background-image:
-    radial-gradient(120% 70% at 50% 0%, rgba(124, 110, 255, 0.22), transparent 60%),
-    radial-gradient(140% 120% at 50% 120%, rgba(0, 0, 0, 0.5), transparent 55%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 64px);
+    radial-gradient(120% 70% at 50% 0%, rgba(122, 60, 240, 0.2), transparent 60%),
+    radial-gradient(140% 120% at 50% 120%, rgba(0, 0, 0, 0.55), transparent 55%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 2px, transparent 2px 64px);
 }
 
-/* A back wall band along the top for depth. */
+/* A back wall band along the top for depth — stone with a hazard footer. */
 .game-wall {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 16%;
-  background: linear-gradient(180deg, #15111f 0%, #1d1830 70%, rgba(29, 24, 48, 0) 100%);
+  background:
+    linear-gradient(180deg, var(--ll-stone-700, #262d38) 0%, var(--ll-stone-800, #1c2129) 70%, rgba(28, 33, 41, 0) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
   z-index: 1;
 }
 
@@ -383,26 +385,66 @@
   width: 108px;
   height: 108px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background:
+    radial-gradient(closest-side, rgba(245, 165, 36, 0.12), rgba(20, 23, 29, 0.55) 78%);
+  border: 2px solid var(--ll-panel-line-strong, rgba(255, 255, 255, 0.2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 20px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(2px);
   display: grid;
   place-items: center;
   touch-action: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
+
+.joystick.engaged {
+  border-color: var(--ll-amber, #f5a524);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 3px rgba(245, 165, 36, 0.25),
+    0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+.joystick-ring {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+.joystick-tick {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+.joystick-tick.up { top: 8px; left: 50%; transform: translateX(-50%); }
+.joystick-tick.down { bottom: 8px; left: 50%; transform: translateX(-50%); }
+.joystick-tick.left { left: 8px; top: 50%; transform: translateY(-50%); }
+.joystick-tick.right { right: 8px; top: 50%; transform: translateY(-50%); }
 
 .joystick-knob {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  background: radial-gradient(circle at 38% 32%, #ffffff, #d6dae9 70%);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.18);
+  transition: transform 0.04s linear;
+}
+
+.joystick.engaged .joystick-knob {
+  background: radial-gradient(circle at 38% 32%, #fff3d6, var(--ll-amber, #f5a524) 75%);
 }
 
 .game-action-btn {
   position: absolute;
-  right: 20px;
+  left: 50%;
   bottom: 26px;
+  transform: translateX(-50%);
   z-index: 8;
   width: 80px;
   height: 80px;
@@ -418,12 +460,32 @@
 }
 
 .game-action-btn:active {
-  transform: scale(0.93);
+  transform: translateX(-50%) scale(0.93);
 }
 
 .game-action-btn:disabled {
   opacity: 0;
   pointer-events: none;
+}
+
+/* Wide pill variant for the boss call-to-action (long label). */
+.game-action-btn--boss {
+  width: auto;
+  height: auto;
+  left: 50%;
+  right: auto;
+  bottom: 30px;
+  transform: translateX(-50%);
+  border-radius: var(--radius-pill);
+  padding: 14px 26px;
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+  background-image: linear-gradient(135deg, #ff5a48, #ff8a3d);
+  box-shadow: 0 10px 26px rgba(255, 90, 72, 0.4);
+}
+
+.game-action-btn--boss:active {
+  transform: translateX(-50%) scale(0.95);
 }
 
 .game-hint-bar {

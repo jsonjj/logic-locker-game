@@ -1,0 +1,130 @@
+/* [Agent 2] DOM overlay styling for the 3D world minimap. */
+
+.ll-minimap {
+  position: absolute;
+  /* Pushed below the top-right cluster (logout + pause/menu + progress chip)
+     so it never covers the pause button. */
+  top: 104px;
+  right: 16px;
+  width: 168px;
+  padding: 10px 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20, 25, 33, 0.86), rgba(12, 15, 20, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(6px);
+  color: #e8edf5;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  user-select: none;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.ll-minimap__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9fb0c6;
+  margin: 0 2px 8px;
+}
+
+.ll-minimap__title b {
+  color: #f2f5fa;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 11px;
+}
+
+.ll-minimap__stage {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  border-radius: 10px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 16px 16px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 16px 16px,
+    radial-gradient(120% 120% at 50% 0%, rgba(70, 90, 120, 0.25), rgba(8, 11, 16, 0.9));
+}
+
+.ll-minimap__room {
+  position: absolute;
+  border: 1.5px solid rgba(150, 175, 210, 0.55);
+  border-radius: 4px;
+  background: rgba(90, 120, 160, 0.1);
+}
+
+.ll-minimap__marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.ll-minimap__marker--door {
+  background: #7fd2ff;
+}
+
+.ll-minimap__marker--door.is-locked {
+  background: #5a6473;
+}
+
+.ll-minimap__marker--exit {
+  background: #46e0c0;
+  width: 11px;
+  height: 11px;
+}
+
+.ll-minimap__marker--anchor {
+  background: transparent;
+  border: 2px solid #f5a524;
+  width: 12px;
+  height: 12px;
+}
+
+.ll-minimap__objective {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #f5a524;
+  box-shadow: 0 0 10px rgba(245, 165, 36, 0.8);
+  animation: ll-minimap-pulse 1.4s ease-in-out infinite;
+}
+
+.ll-minimap__player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 12px solid #ffd27a;
+  filter: drop-shadow(0 0 4px rgba(255, 210, 122, 0.9));
+  transform-origin: 50% 70%;
+  will-change: transform;
+}
+
+@keyframes ll-minimap-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.85);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
+}

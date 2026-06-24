@@ -1,0 +1,61 @@
+/* ============================================================
+   Logic Locker: Lockdown — grounded fortress theme tokens
+   Shared palette for the rescue/escape game layer. Workstreams
+   should style against these variables so the look stays cohesive.
+   ============================================================ */
+
+:root {
+  /* Stone & iron structure */
+  --ll-stone-900: #14171d;
+  --ll-stone-800: #1c2129;
+  --ll-stone-700: #262d38;
+  --ll-stone-600: #333c4a;
+  --ll-stone-500: #475263;
+  --ll-iron: #5b6675;
+  --ll-iron-light: #8b97a8;
+
+  /* Warm rescue accents (your side) */
+  --ll-amber: #f5a524;
+  --ll-amber-deep: #c77b10;
+  --ll-brass: #d8a657;
+
+  /* The Warden / danger (the threat side) */
+  --ll-alarm: #e5484d;
+  --ll-alarm-deep: #b02427;
+  --ll-warden: #7a3cf0;
+  --ll-warden-deep: #4f23a8;
+
+  /* Safe / cleared */
+  --ll-clear: #2fb978;
+  --ll-clear-deep: #1c8b57;
+
+  /* Text on stone */
+  --ll-ink: #eef2f7;
+  --ll-ink-dim: #aab4c2;
+
+  /* Surfaces & lines for fortress panels */
+  --ll-panel: rgba(28, 33, 41, 0.92);
+  --ll-panel-line: rgba(255, 255, 255, 0.1);
+  --ll-panel-line-strong: rgba(255, 255, 255, 0.2);
+
+  /* Gradients */
+  --ll-grad-amber: linear-gradient(135deg, #f5a524 0%, #c77b10 100%);
+  --ll-grad-alarm: linear-gradient(135deg, #e5484d 0%, #b02427 100%);
+  --ll-grad-stone: linear-gradient(180deg, #262d38 0%, #14171d 100%);
+
+  /* Shadows */
+  --ll-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --ll-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* Pursuer alarm glow strength (driven by JS via inline style if needed) */
+  --ll-danger: 0;
+}
+
+/* Optional page wrapper so the fortress backdrop can be applied without
+   leaking into the marketing/auth pages. Workstreams may extend this. */
+.lockdown {
+  color: var(--ll-ink);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(122, 60, 240, 0.12), transparent 60%),
+    var(--ll-stone-900);
+}

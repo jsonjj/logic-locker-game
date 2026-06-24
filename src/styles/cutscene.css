@@ -1,0 +1,316 @@
+/* ============================================================
+   Cutscene — full-screen CSS/SVG staged scene (Agent B)
+   Uses the Lockdown palette. Phases are driven by
+   .cutscene-stage[data-phase="approach|ambush|dragged|resolve"].
+   ============================================================ */
+
+.cutscene {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(130% 90% at 50% -20%, rgba(122, 60, 240, 0.16), transparent 60%),
+    var(--ll-stone-900, #14171d);
+  color: var(--ll-ink, #eef2f7);
+  overflow: hidden;
+}
+
+/* ---------- stage ---------- */
+.cutscene-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* danger alarm wash rising with the phases */
+.cs-alarm {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(80% 60% at 50% 30%, rgba(229, 72, 77, 0.0), transparent 70%);
+  transition: background 700ms ease;
+  pointer-events: none;
+}
+.cutscene-stage[data-phase='ambush'] .cs-alarm {
+  background: radial-gradient(80% 60% at 50% 30%, rgba(229, 72, 77, 0.18), transparent 70%);
+}
+.cutscene-stage[data-phase='dragged'] .cs-alarm {
+  background: radial-gradient(80% 60% at 50% 30%, rgba(229, 72, 77, 0.3), transparent 75%);
+  animation: cs-pulse 1.6s ease-in-out infinite;
+}
+.cutscene-stage[data-phase='resolve'] .cs-alarm {
+  background: radial-gradient(90% 70% at 50% 80%, rgba(245, 165, 36, 0.16), transparent 70%);
+}
+
+@keyframes cs-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* ---------- fortress wall + floor ---------- */
+.cs-wall {
+  position: absolute;
+  inset: 0;
+}
+
+.cs-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26%;
+  background:
+    linear-gradient(180deg, var(--ll-stone-700, #262d38), var(--ll-stone-900, #14171d));
+  border-top: 2px solid var(--ll-panel-line, rgba(255, 255, 255, 0.1));
+}
+
+/* barred gate centered on the back wall */
+.cs-gate {
+  position: absolute;
+  left: 50%;
+  bottom: 26%;
+  transform: translateX(-50%);
+  width: clamp(120px, 22vw, 220px);
+  height: clamp(180px, 40vh, 340px);
+  background: linear-gradient(180deg, #0a0c10, #05070a);
+  border: 4px solid var(--ll-stone-600, #333c4a);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: space-evenly;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.cs-bar {
+  width: 6px;
+  background: linear-gradient(180deg, var(--ll-iron, #5b6675), var(--ll-stone-600, #333c4a));
+  border-radius: 3px;
+  opacity: 0.9;
+}
+
+/* sliding gate door that closes once Akash is taken */
+.cs-gate-door {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--ll-stone-700, #262d38), var(--ll-stone-900, #14171d));
+  border-bottom: 4px solid var(--ll-warden, #7a3cf0);
+  transform: translateY(-100%);
+  transition: transform 800ms cubic-bezier(0.7, 0, 0.3, 1);
+}
+.cutscene-stage[data-phase='dragged'] .cs-gate-door,
+.cutscene-stage[data-phase='resolve'] .cs-gate-door {
+  transform: translateY(0);
+}
+
+/* ---------- figures ---------- */
+.cs-fig {
+  position: absolute;
+  bottom: 24%;
+  height: clamp(150px, 34vh, 300px);
+  width: auto;
+  transition: transform 800ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms ease;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.5));
+}
+
+.sil-body,
+.sil-head { fill: #05070a; }
+.sil-hat { fill: #05070a; }
+
+/* tint each figure subtly via outline glow */
+.cs-self .sil-body,
+.cs-self .sil-head { fill: #1a1410; }
+.cs-self { filter: drop-shadow(0 0 10px rgba(245, 165, 36, 0.55)) drop-shadow(0 10px 16px rgba(0,0,0,0.5)); }
+
+.cs-akash .sil-body,
+.cs-akash .sil-head,
+.cs-akash .sil-hat { fill: #0e1410; }
+.cs-akash { filter: drop-shadow(0 0 9px rgba(47, 185, 120, 0.5)) drop-shadow(0 10px 16px rgba(0,0,0,0.5)); }
+
+.cs-warden .sil-body,
+.cs-warden .sil-head { fill: #120a1e; }
+.cs-warden {
+  height: clamp(170px, 40vh, 340px);
+  filter: drop-shadow(0 0 14px rgba(122, 60, 240, 0.6)) drop-shadow(0 10px 16px rgba(0,0,0,0.5));
+}
+
+/* --- approach: player + akash walk in from the left, warden hidden --- */
+.cs-self { left: 30%; transform: translateX(0); }
+.cs-akash { left: 44%; transform: translateX(0); }
+.cs-warden { left: 64%; transform: translateX(60px) scaleX(-1); opacity: 0; }
+
+.cutscene-stage[data-phase='approach'] .cs-self { transform: translateX(0); }
+.cutscene-stage[data-phase='approach'] .cs-akash { transform: translateX(0); }
+
+/* --- ambush: warden looms in from the right --- */
+.cutscene-stage[data-phase='ambush'] .cs-warden {
+  opacity: 1;
+  transform: translateX(0) scaleX(-1);
+}
+.cutscene-stage[data-phase='ambush'] .cs-akash { transform: translateX(6px); }
+.cutscene-stage[data-phase='ambush'] .cs-self { transform: translateX(-10px); }
+
+/* --- dragged: akash pulled to the gate, warden follows, player held back --- */
+.cutscene-stage[data-phase='dragged'] .cs-warden {
+  opacity: 1;
+  transform: translateX(8%) scaleX(-1);
+}
+.cutscene-stage[data-phase='dragged'] .cs-akash {
+  transform: translateX(40%) scale(0.78);
+  opacity: 0.85;
+}
+.cutscene-stage[data-phase='dragged'] .cs-self {
+  transform: translateX(-18%);
+}
+
+/* --- resolve: akash gone, player steps forward, amber resolve --- */
+.cutscene-stage[data-phase='resolve'] .cs-warden { opacity: 0; transform: translateX(20%) scaleX(-1); }
+.cutscene-stage[data-phase='resolve'] .cs-akash { opacity: 0; transform: translateX(55%) scale(0.6); }
+.cutscene-stage[data-phase='resolve'] .cs-self {
+  left: 44%;
+  transform: translateX(-50%) scale(1.04);
+  filter: drop-shadow(0 0 18px rgba(245, 165, 36, 0.8)) drop-shadow(0 10px 16px rgba(0,0,0,0.5));
+  animation: cs-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes cs-breathe {
+  0%, 100% { transform: translateX(-50%) scale(1.04); }
+  50% { transform: translateX(-50%) scale(1.07); }
+}
+
+/* ---------- caption track ---------- */
+.cutscene-caption {
+  flex: 0 0 auto;
+  margin: 0 auto;
+  width: min(760px, 100%);
+  padding: 14px clamp(16px, 4vw, 28px) clamp(18px, 4vw, 26px);
+  background: linear-gradient(180deg, transparent, rgba(10, 12, 16, 0.65) 30%);
+  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.cap--self { --accent: var(--ll-amber, #f5a524); }
+.cap--akash { --accent: var(--ll-clear, #2fb978); }
+.cap--warden { --accent: var(--ll-warden, #7a3cf0); }
+.cap--ally { --accent: var(--ll-brass, #d8a657); }
+
+.cap-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.cap-name {
+  font-size: clamp(15px, 2.4vw, 19px);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.cap-mood {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ll-ink-dim, #aab4c2);
+  border: 1px solid var(--ll-panel-line-strong, rgba(255, 255, 255, 0.2));
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.cap-count {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--ll-ink-dim, #aab4c2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cap-body {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--ll-panel-line, rgba(255, 255, 255, 0.1));
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 14px;
+  min-height: 3.4em;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.cap-body:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.cap-text {
+  margin: 0;
+  font-size: clamp(14px, 2.4vw, 18px);
+  line-height: 1.55;
+  color: var(--ll-ink, #eef2f7);
+  white-space: pre-wrap;
+}
+
+.cap-caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: cs-caret 0.9s steps(2, jump-none) infinite;
+}
+
+@keyframes cs-caret {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cap-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.cap-skip,
+.cap-next {
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border-radius: 9px;
+  padding: 9px 18px;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.cap-skip {
+  background: transparent;
+  color: var(--ll-ink-dim, #aab4c2);
+  border: 1px solid var(--ll-panel-line-strong, rgba(255, 255, 255, 0.2));
+}
+.cap-skip:hover { color: var(--ll-ink, #eef2f7); }
+
+.cap-next {
+  background: var(--accent);
+  color: #14171d;
+  border: 1px solid transparent;
+  font-weight: 700;
+}
+.cap-next:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.cap-next:active { transform: translateY(0); }
+
+.cap-skip:focus-visible,
+.cap-next:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-fig,
+  .cs-gate-door,
+  .cs-alarm { transition: none; }
+  .cutscene-stage[data-phase='dragged'] .cs-alarm,
+  .cutscene-stage[data-phase='resolve'] .cs-self,
+  .cap-caret { animation: none; }
+  .cap-next:hover { transform: none; }
+}

@@ -1,59 +1,93 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
+import GlobalLogout from './components/GlobalLogout'
+import { RunProvider } from './game3d/state/RunContext'
+import { InventoryProvider } from './game3d/state/InventoryContext'
 import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import ProfileSetupPage from './pages/ProfileSetupPage'
-import GameHallway from './pages/GameHallway'
-import LessonPage from './pages/LessonPage'
-import ReviewPage from './pages/ReviewPage'
-import ProfilePage from './pages/ProfilePage'
+import LeaderboardPage from './pages/LeaderboardPage'
+import { ROOM_ROUTE_PATTERN } from './game3d/contracts'
+
+// The 3D pages pull in three.js + Rapier (a large bundle), so they are
+// code-split and only loaded when the player actually enters the 3D world.
+const WorldPage = lazy(() => import('./pages/WorldPage'))
+const SectorRoomPage = lazy(() => import('./pages/SectorRoomPage'))
+const BossRoomPage = lazy(() => import('./pages/BossRoomPage'))
+const FinalePage = lazy(() => import('./pages/FinalePage'))
+
+function World3DFallback() {
+  return <div className="world-loading">Entering the compound…</div>
+}
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/auth" element={<AuthPage />} />
-      <Route
-        path="/profile-setup"
-        element={
-          <ProtectedRoute requireProfile={false}>
-            <ProfileSetupPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hallway"
-        element={
-          <ProtectedRoute>
-            <GameHallway />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/lesson/:lessonId"
-        element={
-          <ProtectedRoute>
-            <LessonPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/review/:lessonId"
-        element={
-          <ProtectedRoute>
-            <ReviewPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <RunProvider>
+      <InventoryProvider>
+        <GlobalLogout />
+        <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route
+          path="/profile-setup"
+          element={
+            <ProtectedRoute requireProfile={false}>
+              <ProfileSetupPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/world"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<World3DFallback />}>
+                <WorldPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROOM_ROUTE_PATTERN}
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<World3DFallback />}>
+                <SectorRoomPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/boss"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<World3DFallback />}>
+                <BossRoomPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finale"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<World3DFallback />}>
+                <FinalePage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute>
+              <LeaderboardPage />
+            </ProtectedRoute>
+          }
+        />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </InventoryProvider>
+    </RunProvider>
   )
 }

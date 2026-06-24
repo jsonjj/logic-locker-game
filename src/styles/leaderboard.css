@@ -1,0 +1,401 @@
+/* ============================================================
+   Logic Locker: Lockdown — Leaderboard (Agent E)
+   Styled against the shared lockdown theme tokens.
+   ============================================================ */
+
+.ll-lb-page {
+  min-height: 100vh;
+  padding: clamp(20px, 4vw, 48px) clamp(16px, 5vw, 64px) 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---------- Header ---------- */
+
+.ll-lb-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ll-lb-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ll-amber);
+}
+
+.ll-lb-title {
+  margin: 0;
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ll-ink);
+}
+
+.ll-lb-subtitle {
+  margin: 8px 0 0;
+  max-width: 52ch;
+  color: var(--ll-ink-dim);
+  font-size: 0.98rem;
+}
+
+.ll-lb-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--ll-panel-line);
+  background: var(--ll-panel);
+  color: var(--ll-ink);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  box-shadow: var(--ll-shadow-inset);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.ll-lb-back:hover {
+  border-color: var(--ll-panel-line-strong);
+  transform: translateY(-1px);
+}
+
+/* ---------- Scope tabs ---------- */
+
+.ll-lb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--ll-panel-line);
+  background: var(--ll-panel);
+  box-shadow: var(--ll-shadow-inset);
+}
+
+.ll-lb-tab {
+  appearance: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ll-ink-dim);
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.ll-lb-tab:hover {
+  color: var(--ll-ink);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ll-lb-tab[aria-selected='true'] {
+  color: #1b1206;
+  background: var(--ll-grad-amber);
+  border-color: var(--ll-amber-deep);
+  box-shadow: 0 6px 16px rgba(245, 165, 36, 0.28);
+}
+
+/* ---------- Table card ---------- */
+
+.ll-lb-card {
+  border: 1px solid var(--ll-panel-line);
+  background: var(--ll-panel);
+  border-radius: 16px;
+  box-shadow: var(--ll-shadow);
+  overflow: hidden;
+}
+
+.ll-lb-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ll-panel-line);
+  background: var(--ll-grad-stone);
+}
+
+.ll-lb-card-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ll-ink);
+}
+
+.ll-lb-count {
+  font-size: 0.8rem;
+  color: var(--ll-ink-dim);
+}
+
+.ll-lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.ll-lb-table thead th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ll-ink-dim);
+  border-bottom: 1px solid var(--ll-panel-line);
+}
+
+.ll-lb-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ll-panel-line);
+  color: var(--ll-ink);
+  vertical-align: middle;
+}
+
+.ll-lb-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ll-lb-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ll-col-rank {
+  width: 64px;
+}
+.ll-col-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Rank badge ---------- */
+
+.ll-lb-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--ll-ink-dim);
+  background: rgba(255, 255, 255, 0.04);
+  font-variant-numeric: tabular-nums;
+}
+
+.ll-lb-rank.is-gold {
+  color: #2a1c04;
+  background: linear-gradient(135deg, #ffd66b 0%, #f5a524 100%);
+}
+.ll-lb-rank.is-silver {
+  color: #1a1f29;
+  background: linear-gradient(135deg, #e6ecf5 0%, #aab4c2 100%);
+}
+.ll-lb-rank.is-bronze {
+  color: #2a1606;
+  background: linear-gradient(135deg, #e2a766 0%, #c77b10 100%);
+}
+
+/* ---------- Player cell ---------- */
+
+.ll-lb-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ll-lb-avatar {
+  flex: none;
+  border-radius: 50%;
+  box-shadow: var(--ll-shadow-inset);
+}
+
+.ll-lb-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ll-lb-you {
+  margin-left: 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ll-amber);
+  border: 1px solid var(--ll-amber-deep);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/* ---------- Highlighted (current user) row ---------- */
+
+.ll-lb-row.is-you td {
+  background: rgba(245, 165, 36, 0.1);
+}
+.ll-lb-row.is-you td:first-child {
+  box-shadow: inset 3px 0 0 var(--ll-amber);
+}
+
+/* ---------- Stars ---------- */
+
+.ll-lb-stars {
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.ll-lb-star {
+  color: var(--ll-brass);
+}
+.ll-lb-star.is-empty {
+  color: var(--ll-stone-500);
+}
+
+.ll-lb-score {
+  font-weight: 700;
+  color: var(--ll-amber);
+}
+
+/* ---------- States ---------- */
+
+.ll-lb-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--ll-ink-dim);
+}
+
+.ll-lb-state strong {
+  display: block;
+  color: var(--ll-ink);
+  font-size: 1.05rem;
+  margin-bottom: 6px;
+}
+
+.ll-lb-skeleton {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 400% 100%;
+  animation: ll-lb-shimmer 1.3s ease infinite;
+}
+
+@keyframes ll-lb-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* ============================================================
+   Compact widget (embeddable top-N list)
+   ============================================================ */
+
+.ll-lbw {
+  border: 1px solid var(--ll-panel-line);
+  background: var(--ll-panel);
+  border-radius: 14px;
+  box-shadow: var(--ll-shadow);
+  overflow: hidden;
+}
+
+.ll-lbw-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ll-panel-line);
+  background: var(--ll-grad-stone);
+}
+
+.ll-lbw-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ll-ink-dim);
+}
+
+.ll-lbw-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.ll-lbw-row {
+  display: grid;
+  grid-template-columns: 26px auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  font-size: 0.86rem;
+}
+
+.ll-lbw-row + .ll-lbw-row {
+  border-top: 1px solid var(--ll-panel-line);
+}
+
+.ll-lbw-row.is-you {
+  background: rgba(245, 165, 36, 0.1);
+  box-shadow: inset 3px 0 0 var(--ll-amber);
+}
+
+.ll-lbw-rank {
+  font-weight: 800;
+  color: var(--ll-ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.ll-lbw-name {
+  font-weight: 600;
+  color: var(--ll-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ll-lbw-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: end;
+  color: var(--ll-ink-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ll-lbw-meta .ll-lb-score {
+  font-size: 0.9rem;
+}
+
+.ll-lbw-state {
+  padding: 22px 14px;
+  text-align: center;
+  color: var(--ll-ink-dim);
+  font-size: 0.85rem;
+}
+
+.ll-lbw-time {
+  font-size: 0.78rem;
+}

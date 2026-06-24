@@ -1,4 +1,20 @@
-import type { Lesson, Step } from '../types'
+import type { ChoiceStep, Lesson, Step } from '../types'
+
+const CHOICE_TYPES = new Set<Step['type']>([
+  'multipleChoice',
+  'prediction',
+  'highlightChoice',
+  'symbolTap',
+])
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 /** Total number of versions for a step (base + variants). */
 export function variantCount(step: Step): number {
@@ -31,6 +47,25 @@ export function resolveStep(step: Step, track: number): Step {
     phase: step.phase,
     variants: step.variants,
   } as Step
+}
+
+/**
+ * Produce a lightly-varied copy of a lesson for one run. This is the local,
+ * no-network "freshness" pass (same spirit as the procedural enemy AI): it
+ * doesn't invent new content, it just (a) resolves every step to the chosen
+ * authored case track and (b) shuffles the answer order on choice questions, so
+ * players can't memorize "the answer is always B" or the exact wording.
+ */
+export function varyLesson(lesson: Lesson, track: number): Lesson {
+  const steps = lesson.steps.map((step) => {
+    const resolved = resolveStep(step, track)
+    if (CHOICE_TYPES.has(resolved.type) && 'choices' in resolved) {
+      const cs = resolved as ChoiceStep
+      return { ...cs, choices: shuffle(cs.choices) } as Step
+    }
+    return resolved
+  })
+  return { ...lesson, steps }
 }
 
 /**

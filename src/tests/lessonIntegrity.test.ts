@@ -104,7 +104,10 @@ describe('lesson content integrity', () => {
     })
 
     it(`${lesson.id}: every interactive question has an alternate version`, () => {
-      expect(trackCount(lesson), `${lesson.id} should offer 2 case tracks`).toBe(2)
+      expect(
+        trackCount(lesson),
+        `${lesson.id} should offer at least 2 case tracks`,
+      ).toBeGreaterThanOrEqual(2)
       for (const step of lesson.steps) {
         if (isInteractiveStep(step)) {
           expect(

@@ -99,10 +99,17 @@ function LobbyEntry() {
             value={joinCode}
             maxLength={6}
             placeholder="CODE"
+            aria-label="Room code"
+            inputMode="text"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            autoComplete="off"
+            spellCheck={false}
+            enterKeyHint="go"
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             onKeyDown={(e) => e.key === 'Enter' && onJoin()}
           />
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onJoin}>
+          <button type="button" className="btn btn-ghost mp-join-btn" disabled={busy} onClick={onJoin}>
             Join
           </button>
         </div>

@@ -153,11 +153,16 @@
 .mp-join-row {
   display: flex;
   gap: 10px;
+  align-items: stretch;
 }
 .mp-code-input {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
   font-size: 22px;
   letter-spacing: 0.3em;
+  /* keep the last char's spacing from pushing text off-centre */
+  text-indent: 0.3em;
   text-align: center;
   text-transform: uppercase;
   padding: 12px;
@@ -165,6 +170,39 @@
   border: 1px solid #2f3a4d;
   background: #0f141b;
   color: #eaf0fb;
+}
+.mp-code-input:focus {
+  outline: none;
+  border-color: #ffb357;
+  box-shadow: 0 0 0 3px rgba(255, 179, 87, 0.25);
+}
+.mp-join-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Phones: stack the code entry so the input gets full width and the button
+   is a comfortable tap target underneath. */
+@media (max-width: 480px) {
+  .mp-entry-card,
+  .mp-room-card,
+  .mp-results-card {
+    padding: 22px 18px;
+  }
+  .mp-join-row {
+    flex-direction: column;
+  }
+  .mp-code-input {
+    font-size: 26px;
+    letter-spacing: 0.45em;
+    text-indent: 0.45em;
+    padding: 14px 12px;
+  }
+  .mp-join-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+  }
 }
 .mp-error {
   color: #ff7b88;

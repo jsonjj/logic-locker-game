@@ -16,7 +16,7 @@ export default function ProfileSetupPage() {
   // If a profile already exists, skip setup.
   useEffect(() => {
     if (profile?.displayName) {
-      navigate('/world', { replace: true })
+      navigate('/play', { replace: true })
     }
   }, [profile, navigate])
 
@@ -36,7 +36,7 @@ export default function ProfileSetupPage() {
     try {
       const created = await createUserProfile(user.uid, user.email ?? '', name, avatarId)
       setProfile(created)
-      navigate('/world', { replace: true })
+      navigate('/play', { replace: true })
     } catch {
       setError('Could not save your profile. Check your connection and try again.')
       setBusy(false)

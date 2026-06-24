@@ -4,6 +4,7 @@ import { Line } from '@react-three/drei'
 import { useGameState } from '../state/GameStateContext'
 import { useInventory } from '../state/InventoryContext'
 import { useCombat } from './CombatContext'
+import { playBlast } from '../../audio/sound'
 
 interface Fx {
   kind: 'ranged' | 'melee' | 'aoe'
@@ -41,6 +42,7 @@ export default function WeaponController({ disabled = false }: WeaponControllerP
       const now = performance.now()
       if (now - lastFire.current < (w.cooldownMs ?? 500)) return
       lastFire.current = now
+      playBlast(w.aoe ? 'boom' : 'laser')
 
       const from = gs.playerPos.current
       const heading = gs.playerHeading.current

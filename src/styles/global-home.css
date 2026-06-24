@@ -1,7 +1,7 @@
-.global-logout {
+.global-home {
   position: fixed;
   top: 12px;
-  right: 12px;
+  right: 120px;
   z-index: 2000;
   display: inline-flex;
   align-items: center;
@@ -19,16 +19,12 @@
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
-.global-logout:hover {
-  background: linear-gradient(135deg, #e5484d 0%, #c0392b 100%);
+.global-home:hover {
+  background: linear-gradient(135deg, #ffb357 0%, #e0892f 100%);
   border-color: transparent;
+  color: #1a1206;
 }
 
-.global-logout:active {
+.global-home:active {
   transform: scale(0.96);
-}
-
-/* Keep the in-game HUD's top-right cluster clear of the always-on controls. */
-.hud3d-top {
-  padding-right: 270px;
 }

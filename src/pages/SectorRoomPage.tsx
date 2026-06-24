@@ -19,7 +19,8 @@ import { useInventory } from '../game3d/state/InventoryContext'
 import CombatHud from '../game3d/hud/CombatHud'
 import InventoryPanel from '../game3d/hud/InventoryPanel'
 import GameOver from '../game3d/hud/GameOver'
-import { rewardForSector, flawlessBonusForSector } from '../game3d/systems/gear'
+import { rewardWheel, pickWeightedIndex, type GearItem } from '../game3d/systems/gear'
+import RewardWheel from '../game3d/hud/RewardWheel'
 import { getObjective } from '../game3d/story/objectives'
 import { R3D, vec3, type LevelResult, type PuzzleResult, type PuzzleReviewItem, type Vec3 } from '../game3d/contracts'
 import { getSector, nextSector } from '../data/sectors'
@@ -131,6 +132,7 @@ function RoomInner({ sectorId }: { sectorId: string }) {
   const [reviewOpen, setReviewOpen] = useState(false)
   const [near, setNear] = useState<'puzzle' | 'exit' | null>(null)
   const [result, setResult] = useState<LevelResult | null>(null)
+  const [wheel, setWheel] = useState<{ segments: GearItem[]; winnerIndex: number; flawless: boolean } | null>(null)
   const [isBest, setIsBest] = useState(false)
   const [priorBest, setPriorBest] = useState<LevelResult | null>(null)
   // 'learn' = briefing beat, 'play' = walk + crack the lock, 'results' = scored.
@@ -319,26 +321,15 @@ function RoomInner({ sectorId }: { sectorId: string }) {
     setResult(computed)
     setIsBest(best)
     if (best) setPriorBest(computed)
-    // Reward gear for clearing the block. A FLAWLESS (zero-mistake) breach is
-    // worth more: +1 life and a bonus piece of mastery gear, so clean reasoning
-    // literally makes you stronger/faster sooner than guessing your way through.
-    const reward = rewardForSector(sectorId)
+    // Reward: spin a performance-weighted wheel of upgrades. A FLAWLESS
+    // (zero-mistake) breach bends the odds toward stronger gear AND grants +1
+    // life (applied when the wheel is claimed), so clean reasoning literally
+    // makes you stronger sooner than guessing your way through.
     const flawless = res.mistakes === 0
-    let msg = ''
-    if (reward) {
-      const added = inv.addItem(reward.id)
-      msg = added ? `Unlocked ${reward.icon} ${reward.name}` : `Already have ${reward.name}`
+    const entries = rewardWheel(sectorId, flawless, res.mistakes)
+    if (entries.length > 0) {
+      setWheel({ segments: entries.map((e) => e.item), winnerIndex: pickWeightedIndex(entries), flawless })
     }
-    if (flawless) {
-      run.gainLife()
-      const bonus = flawlessBonusForSector(sectorId)
-      const gotBonus = bonus ? inv.addItem(bonus.id) : false
-      msg =
-        gotBonus && bonus
-          ? `Flawless! +1 life · ${reward ? `${reward.icon} ${reward.name} + ` : ''}${bonus.icon} ${bonus.name}`
-          : `Flawless breach! +1 life${reward ? ` · ${reward.icon} ${reward.name}` : ''}`
-    }
-    if (msg) setToast(msg)
     if (uid) {
       void saveLevelResult(uid, computed)
       if (profile) {
@@ -365,6 +356,7 @@ function RoomInner({ sectorId }: { sectorId: string }) {
   function resetRoom() {
     setSolved(false)
     setResult(null)
+    setWheel(null)
     setReview(null)
     setReviewOpen(false)
     setPhase('play')
@@ -478,6 +470,23 @@ function RoomInner({ sectorId }: { sectorId: string }) {
             onReview={review && review.length ? () => setReviewOpen(true) : undefined}
           />
         </div>
+      )}
+
+      {phase === 'results' && wheel && (
+        <RewardWheel
+          segments={wheel.segments}
+          winnerIndex={wheel.winnerIndex}
+          onResult={(item) => {
+            const added = inv.addItem(item.id)
+            if (wheel.flawless) run.gainLife()
+            setToast(
+              `${added ? 'Unlocked' : 'Bonus'} ${item.icon} ${item.name}${
+                wheel.flawless ? ' · +1 life (flawless)' : ''
+              }`,
+            )
+          }}
+          onClose={() => setWheel(null)}
+        />
       )}
 
       {reviewOpen && review && review.length > 0 && (

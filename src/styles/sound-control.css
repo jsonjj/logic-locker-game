@@ -1,0 +1,28 @@
+.global-sound {
+  position: fixed;
+  top: 12px;
+  right: 212px;
+  z-index: 2000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: rgba(18, 20, 28, 0.72);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.global-sound:hover {
+  background: rgba(40, 46, 60, 0.9);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.global-sound:active {
+  transform: scale(0.94);
+}

@@ -185,3 +185,47 @@ export const SCATTERED_PICKUPS = ['medkit', 'combat-boots'] as const
 export function gear(id: string): GearItem | undefined {
   return GEAR[id]
 }
+
+// --- Reward wheel ----------------------------------------------------------
+// Instead of a fixed drop, a clear spins a wheel of possible upgrades. Your
+// performance bends the odds: a flawless run weights the wheel toward the
+// stronger gear (and the block's signature reward), while a messy clear leans
+// toward consolation utility. You still always KEEP whatever the wheel lands on.
+
+export interface WheelEntry {
+  item: GearItem
+  weight: number
+}
+
+export function rewardWheel(sectorId: string, flawless: boolean, mistakes: number): WheelEntry[] {
+  const entries: WheelEntry[] = []
+  const add = (id: string, weight: number) => {
+    const it = GEAR[id]
+    if (it && weight > 0 && !entries.some((e) => e.item.id === id)) entries.push({ item: it, weight })
+  }
+
+  const base = rewardForSector(sectorId)
+  if (base) entries.push({ item: base, weight: flawless ? 5 : 4 })
+
+  // Jackpot weapons — much likelier when you play clean.
+  add('laser-rifle', flawless ? 2.5 : mistakes > 0 ? 0.4 : 1)
+  add('shock-emitter', flawless ? 1.5 : 0.3)
+  // Survivability + utility.
+  add('riot-armor', 1.5)
+  add('combat-boots', 2)
+  add('medkit', mistakes > 0 ? 3 : 1.2)
+  add('dagger', 0.8)
+
+  return entries
+}
+
+/** Pick a winning index from weighted entries. */
+export function pickWeightedIndex(entries: WheelEntry[]): number {
+  const total = entries.reduce((s, e) => s + e.weight, 0)
+  let r = Math.random() * total
+  for (let i = 0; i < entries.length; i++) {
+    r -= entries[i].weight
+    if (r <= 0) return i
+  }
+  return entries.length - 1
+}

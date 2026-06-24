@@ -18,7 +18,7 @@ export default function AuthPage() {
   // Once authenticated, leave the auth screen.
   useEffect(() => {
     if (!loading && user) {
-      navigate(profile?.displayName ? '/world' : '/profile-setup', { replace: true })
+      navigate(profile?.displayName ? '/play' : '/profile-setup', { replace: true })
     }
   }, [user, profile, loading, navigate])
 

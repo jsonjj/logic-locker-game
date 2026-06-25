@@ -105,6 +105,9 @@
   height: 76px;
   border-radius: 50%;
   border: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   background: radial-gradient(circle at 35% 30%, #ff8a3d, #ff4030);
   color: #fff;
   font-weight: 900;

@@ -1,6 +1,7 @@
 import { useEffect, useState, type RefObject } from 'react'
 import ArenaMinimap from './ArenaMinimap'
 import Joystick3D from '../game3d/hud/Joystick3D'
+import { useHoldFire } from '../game3d/hud/useHoldFire'
 import type { LiveEnemy } from './SharedEnemies'
 import type { NetPlayer } from './types'
 
@@ -22,10 +23,6 @@ interface MultiplayerHudProps {
   weaponName: string
   power: number
   mastery: number
-}
-
-function fireShot() {
-  window.dispatchEvent(new CustomEvent('ll-fire'))
 }
 
 /** Live, always-on competitive overlay: leaderboard + clock + HP + radar. */
@@ -61,6 +58,8 @@ export default function MultiplayerHud({
   const ranked = [...roster].sort(
     (a, b) => (b.wins ?? 0) - (a.wins ?? 0) || (b.kills ?? 0) - (a.kills ?? 0),
   )
+
+  const holdFire = useHoldFire()
 
   return (
     <>
@@ -118,7 +117,7 @@ export default function MultiplayerHud({
         +
       </div>
 
-      <button type="button" className="mp-fire" onClick={fireShot} aria-label="Fire">
+      <button type="button" className="mp-fire" {...holdFire} aria-label="Fire">
         FIRE
       </button>
 

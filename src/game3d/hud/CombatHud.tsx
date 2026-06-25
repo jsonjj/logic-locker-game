@@ -1,4 +1,5 @@
 import type { GearItem } from '../systems/gear'
+import { useHoldFire } from './useHoldFire'
 import '../../styles/combat.css'
 
 export interface CombatHudProps {
@@ -29,6 +30,7 @@ export default function CombatHud({
 }: CombatHudProps) {
   const low = timeLeftSec !== null && timeLeftSec <= 15
   const hearts = Array.from({ length: Math.max(maxLives, lives) }, (_, i) => i < lives)
+  const holdFire = useHoldFire()
 
   return (
     <>
@@ -63,7 +65,7 @@ export default function CombatHud({
         type="button"
         className="combat-fire"
         data-ui
-        onClick={() => window.dispatchEvent(new Event('ll-fire'))}
+        {...holdFire}
         aria-label="Fire weapon (F)"
       >
         FIRE

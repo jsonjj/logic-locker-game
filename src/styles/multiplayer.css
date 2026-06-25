@@ -389,6 +389,9 @@
   letter-spacing: 0.08em;
   cursor: pointer;
   z-index: 30;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .mp-fire:active {
   background: rgba(255, 93, 108, 0.4);

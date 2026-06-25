@@ -5,7 +5,7 @@
  * Mirrors the Firestore patterns in ./progress.ts. All writes/reads are guarded
  * by `isFirebaseConfigured` so the app degrades gracefully without keys.
  */
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore'
+import { doc, getDoc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from './firebaseConfig'
 import type { LevelResult, SectorId } from '../game/lockdown/contracts'
 
@@ -40,4 +40,15 @@ export async function getLevelResults(uid: string): Promise<Record<SectorId, Lev
     results[d.id] = d.data() as LevelResult
   }
   return results
+}
+
+/**
+ * Wipe every stored level result for a player. Used on PRESTIGE: replays start
+ * from room 1 with all sectors re-locked, so you must clear them again before
+ * the Warden re-opens. Gear/upgrades live elsewhere and are untouched.
+ */
+export async function clearLevelResults(uid: string): Promise<void> {
+  if (!isFirebaseConfigured) return
+  const snap = await getDocs(collection(db, 'users', uid, 'results'))
+  await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)))
 }

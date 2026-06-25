@@ -16,6 +16,8 @@ import WeaponController from '../game3d/combat/WeaponController'
 import { useRun } from '../game3d/state/RunContext'
 import { useInventory } from '../game3d/state/InventoryContext'
 import { prestigeReward, type GearItem } from '../game3d/systems/gear'
+import { useAuth } from '../context/AuthContext'
+import { clearLevelResults } from '../firebase/results'
 import { R3D, vec3, type Vec3 } from '../game3d/contracts'
 import '../styles/finale.css'
 
@@ -154,6 +156,7 @@ function FinaleInner() {
   const combat = useCombat()
   const run = useRun()
   const inv = useInventory()
+  const { user } = useAuth()
 
   const TOTAL = useMemo(() => 50 + Math.floor(Math.random() * 11), [])
   const MAX_ALLIES = Math.floor(TOTAL / 5)
@@ -196,8 +199,11 @@ function FinaleInner() {
       inv.equip(reward.id)
     }
     inv.prestigeUp()
+    // Reset room progress: the replay starts at room 1 and the Warden stays
+    // locked until you clear every block again. Gear/upgrades are kept.
+    if (user) void clearLevelResults(user.uid)
     setPrestigeAward({ level: inv.prestige + 1, item: reward ?? null })
-  }, [phase, inv])
+  }, [phase, inv, user])
 
   const blocked = menuOpen || invOpen || run.isGameOver || phase === 'end'
 
@@ -543,7 +549,8 @@ function FinaleInner() {
                   You keep every upgrade. {prestigeAward.item
                     ? `Bonus unlock: ${prestigeAward.item.icon} ${prestigeAward.item.name}.`
                     : 'Your arsenal is already complete.'}{' '}
-                  Replay for tougher questions and bigger swarms — the more you learn, the stronger you get.
+                  Your run resets to room 1 — clear every block again (tougher
+                  questions, bigger swarms) to reach the Warden. The more you learn, the stronger you get.
                 </p>
               </div>
             )}

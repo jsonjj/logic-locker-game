@@ -6,6 +6,7 @@ import Hud from '../game3d/hud/Hud'
 import GameMenu from '../game3d/hud/GameMenu'
 import BossDuel from '../game3d/boss/BossDuel'
 import { GameStateProvider, useGameState } from '../game3d/state/GameStateContext'
+import { useInventory } from '../game3d/state/InventoryContext'
 import { R3D, vec3, type RoomDef, type SectorId } from '../game3d/contracts'
 
 const NEAR_RANGE = 3.6
@@ -54,6 +55,7 @@ function Warden() {
 function BossInner() {
   const navigate = useNavigate()
   const gs = useGameState()
+  const inv = useInventory()
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [near, setNear] = useState(false)
@@ -148,6 +150,7 @@ function BossInner() {
 
       {duelOpen && (
         <BossDuel
+          prestige={inv.prestige}
           onWin={handleWin}
           onClose={() => {
             setDuelOpen(false)

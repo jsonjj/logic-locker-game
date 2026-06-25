@@ -147,6 +147,7 @@ export async function startMatch(code: string, durationMs: number, targetWins: n
     fanout[`players/${uid}/wins`] = 0
     fanout[`players/${uid}/deaths`] = 0
     fanout[`players/${uid}/alive`] = true
+    fanout[`players/${uid}/quiz`] = null
   }
   await update(ref(rtdb, `matches/${code}`), fanout)
 }
@@ -170,12 +171,43 @@ export async function nextRound(code: string, round: number, durationMs: number)
   await update(ref(rtdb, `matches/${code}`), fanout)
 }
 
-/** End the round → short intermission while showing the round winner. */
-export async function goIntermission(code: string, winnerUid: string, untilMs: number): Promise<void> {
-  await update(ref(rtdb, `matches/${code}/meta`), {
-    status: 'intermission',
-    lastRoundWinner: winnerUid,
-    intermissionEndsAt: untilMs,
+/**
+ * End the round → intermission with a shared quiz question. Resets every
+ * player's quiz answer so they can take the new question; the next round begins
+ * once everyone has answered (or the intermission times out).
+ */
+export async function goIntermission(
+  code: string,
+  winnerUid: string,
+  untilMs: number,
+  quizId: number,
+): Promise<void> {
+  const snap = await get(ref(rtdb, `matches/${code}/players`))
+  const players = (snap.val() as Record<string, NetPlayer> | null) ?? {}
+  const fanout: Record<string, unknown> = {
+    'meta/status': 'intermission',
+    'meta/lastRoundWinner': winnerUid,
+    'meta/intermissionEndsAt': untilMs,
+    'meta/quizId': quizId,
+  }
+  for (const uid of Object.keys(players)) {
+    fanout[`players/${uid}/quiz`] = { answered: false }
+  }
+  await update(ref(rtdb, `matches/${code}`), fanout)
+}
+
+/** Submit my answer to the intermission quiz (drives my next-round buff). */
+export function submitQuiz(
+  code: string,
+  uid: string,
+  result: { correct: boolean; timeMs: number; mistakes: number; tier: number },
+): void {
+  void update(ref(rtdb, `matches/${code}/players/${uid}/quiz`), {
+    answered: true,
+    correct: result.correct,
+    timeMs: result.timeMs,
+    mistakes: result.mistakes,
+    tier: result.tier,
   })
 }
 

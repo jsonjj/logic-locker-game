@@ -20,6 +20,8 @@ interface EquippedState {
 interface Persisted {
   owned: string[]
   equipped: EquippedState
+  /** How many times the player has finished the game (kept across replays). */
+  prestige?: number
 }
 
 interface InventoryValue {
@@ -32,11 +34,16 @@ interface InventoryValue {
   weapon: GearItem
   bonusLives: number
   speedMult: number
+  /** Completed-run count; raises difficulty and keeps gear on replay. */
+  prestige: number
+  /** Bump the prestige counter (called once when the game is finished). */
+  prestigeUp: () => void
 }
 
 const DEFAULT: Persisted = {
   owned: [STARTER_WEAPON],
   equipped: { weapon: STARTER_WEAPON, armor: null, utility: null },
+  prestige: 0,
 }
 
 const InventoryContext = createContext<InventoryValue | undefined>(undefined)
@@ -59,6 +66,7 @@ function load(uid: string | undefined): Persisted {
         armor: eq.armor && GEAR[eq.armor] ? eq.armor : null,
         utility: eq.utility && GEAR[eq.utility] ? eq.utility : null,
       },
+      prestige: Math.max(0, Math.floor(parsed.prestige ?? 0)),
     }
   } catch {
     return DEFAULT
@@ -70,6 +78,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const uid = user?.uid
   const [owned, setOwned] = useState<string[]>(DEFAULT.owned)
   const [equipped, setEquipped] = useState<EquippedState>(DEFAULT.equipped)
+  const [prestige, setPrestige] = useState<number>(0)
   const loadedFor = useRef<string | undefined>(undefined)
 
   // (Re)load when the signed-in user changes.
@@ -77,6 +86,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     const data = load(uid)
     setOwned(data.owned)
     setEquipped(data.equipped)
+    setPrestige(data.prestige ?? 0)
     loadedFor.current = uid
   }, [uid])
 
@@ -84,11 +94,11 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loadedFor.current !== uid) return
     try {
-      localStorage.setItem(storageKey(uid), JSON.stringify({ owned, equipped }))
+      localStorage.setItem(storageKey(uid), JSON.stringify({ owned, equipped, prestige }))
     } catch {
       /* ignore quota / privacy-mode errors */
     }
-  }, [owned, equipped, uid])
+  }, [owned, equipped, prestige, uid])
 
   const addItem = useCallback((id: string): boolean => {
     if (!GEAR[id]) return false
@@ -109,14 +119,16 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
 
   const isOwned = useCallback((id: string) => owned.includes(id), [owned])
 
+  const prestigeUp = useCallback(() => setPrestige((p) => p + 1), [])
+
   const value = useMemo<InventoryValue>(() => {
     const weapon = GEAR[equipped.weapon] ?? GEAR[STARTER_WEAPON]
     const armor = equipped.armor ? GEAR[equipped.armor] : undefined
     const utility = equipped.utility ? GEAR[equipped.utility] : undefined
     const bonusLives = (armor?.bonusLives ?? 0) + (utility?.bonusLives ?? 0)
     const speedMult = utility?.speedMult ?? 1
-    return { owned, equipped, addItem, equip, isOwned, weapon, bonusLives, speedMult }
-  }, [owned, equipped, addItem, equip, isOwned])
+    return { owned, equipped, addItem, equip, isOwned, weapon, bonusLives, speedMult, prestige, prestigeUp }
+  }, [owned, equipped, addItem, equip, isOwned, prestige, prestigeUp])
 
   return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>
 }

@@ -82,6 +82,28 @@ export function respawnDelay(deaths: number): number {
 // --- Rounds (first-to-N series) -------------------------------------------
 export const ROUND_DURATION_MS = 75 * 1000
 export const INTERMISSION_MS = 6 * 1000
+/** Max time the between-rounds quiz waits before starting the next round. */
+export const QUIZ_INTERMISSION_MS = 30 * 1000
+
+/**
+ * Score a player's intermission-quiz answer into a reward tier:
+ *   2 (big)   — correct, clean, and fast
+ *   1 (small) — correct
+ *   0 (none)  — wrong / unanswered
+ * The tier feeds a next-round buff (extra weapon damage + maybe bonus HP).
+ */
+export function quizTier(correct: boolean, timeMs: number, mistakes: number): number {
+  if (!correct) return 0
+  if (mistakes === 0 && timeMs <= 8000) return 2
+  return 1
+}
+
+/** Next-round buff granted by a quiz reward tier. */
+export function quizBuff(tier: number): { damage: number; hp: number } {
+  if (tier >= 2) return { damage: 2, hp: 1 }
+  if (tier >= 1) return { damage: 1, hp: 0 }
+  return { damage: 0, hp: 0 }
+}
 
 /** Even spawn points around the arena center for up to 6 players. */
 export function playerSpawn(index: number): { x: number; y: number; z: number } {

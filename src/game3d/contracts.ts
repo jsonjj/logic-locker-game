@@ -219,6 +219,8 @@ export interface PuzzleSceneProps {
   lesson: Lesson
   /** The puzzle anchor in world space (for in-world devices). */
   anchor?: Vec3
+  /** Prestige level — raises question difficulty on replays (default 0). */
+  prestige?: number
   /** Fired when the player finishes (solved or bailed). */
   onComplete: (result: PuzzleResult) => void
   /** Optional incremental mistake signal (e.g. to nudge the alarm). */

@@ -24,6 +24,18 @@ export interface NetPlayer {
   deaths?: number
   online?: boolean
   joinedAt?: number
+  /** Result of the between-rounds quiz (drives next round's buff). */
+  quiz?: NetQuiz
+}
+
+/** A player's answer to the intermission question. */
+export interface NetQuiz {
+  answered?: boolean
+  correct?: boolean
+  timeMs?: number
+  mistakes?: number
+  /** Reward tier earned: 0 none, 1 small, 2 big. */
+  tier?: number
 }
 
 /** A host-simulated enemy, broadcast to every client. */
@@ -59,6 +71,8 @@ export interface NetMeta {
   lastRoundWinner?: string
   /** uid of the series champion (set when status === 'ended'). */
   champion?: string
+  /** Index into the shared quiz pool for the current intermission question. */
+  quizId?: number
 }
 
 export interface MatchSnapshot {

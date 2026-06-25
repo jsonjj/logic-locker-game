@@ -30,7 +30,7 @@ function formatTime(ms: number): string {
   return `${mm}:${ss.toString().padStart(2, '0')}`
 }
 
-export default function PuzzleScene({ sectorId, lesson, onComplete, onMistake }: PuzzleSceneProps) {
+export default function PuzzleScene({ sectorId, lesson, prestige = 0, onComplete, onMistake }: PuzzleSceneProps) {
   const elapsed = usePuzzleTimer()
   const mistakesRef = useRef(0)
   const stepMistakes = useRef(0)
@@ -44,8 +44,8 @@ export default function PuzzleScene({ sectorId, lesson, onComplete, onMistake }:
 
   // The quiz is built once per chosen difficulty (randomized variant per node).
   const quiz = useMemo<InteractiveStep[]>(
-    () => (difficulty ? buildQuiz(lesson, difficulty) : []),
-    [lesson, difficulty],
+    () => (difficulty ? buildQuiz(lesson, difficulty, prestige) : []),
+    [lesson, difficulty, prestige],
   )
 
   // Tick once a second so the on-screen clock stays live.

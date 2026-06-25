@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { isRealtimeConfigured } from '../firebase/firebaseConfig'
@@ -16,8 +16,18 @@ import {
   finishSeries,
   reportDeath,
   reportRespawn,
+  submitQuiz,
 } from '../multiplayer/net'
-import { playerSpawn, respawnDelay, ROUND_DURATION_MS, INTERMISSION_MS, MAX_HP } from '../multiplayer/arena'
+import {
+  playerSpawn,
+  respawnDelay,
+  ROUND_DURATION_MS,
+  QUIZ_INTERMISSION_MS,
+  MAX_HP,
+  quizTier,
+  quizBuff,
+} from '../multiplayer/arena'
+import { getQuizQuestion, randomQuizId } from '../multiplayer/quizPool'
 import { type NetEnemy, type NetMeta, type NetPlayer } from '../multiplayer/types'
 import { resolveColors } from '../multiplayer/colors'
 import { useInventory } from '../game3d/state/InventoryContext'
@@ -52,6 +62,9 @@ function Arena({ code, uid }: { code: string; uid: string }) {
   const { views } = useSectorProgress()
   const mastery = useMemo(() => views.filter((v) => v.state === 'cleared').length, [views])
 
+  // Buff earned from the previous intermission's quiz, applied for this round.
+  const [roundBuff, setRoundBuff] = useState({ damage: 0, hp: 0 })
+
   // Carry single-player gear into the arena: equipped ranged weapon (or a
   // baseline pistol so you're never gun-less), plus bonus HP from armor — then
   // stack the lessons-earned mastery boost on top.
@@ -66,14 +79,14 @@ function Arena({ code, uid }: { code: string; uid: string }) {
     const cdScale = Math.max(0.6, 1 - mastery * 0.04)
     return {
       name: base.name,
-      damage: (base.damage ?? 1) + dmgBoost,
+      damage: (base.damage ?? 1) + dmgBoost + roundBuff.damage,
       range: (base.range ?? 13) + mastery * 0.6,
       cooldownMs: Math.round((base.cooldownMs ?? 360) * cdScale),
       aoe: base.aoe,
       color: base.color,
     }
-  }, [inv.weapon, mastery])
-  const maxHp = MAX_HP + inv.bonusLives + Math.floor(mastery / 2)
+  }, [inv.weapon, mastery, roundBuff.damage])
+  const maxHp = MAX_HP + inv.bonusLives + Math.floor(mastery / 2) + roundBuff.hp
 
   const playersRef = useRef<Record<string, NetPlayer>>({})
   const enemiesViewRef = useRef<Map<string, LiveEnemy> | null>(null)
@@ -141,6 +154,13 @@ function Arena({ code, uid }: { code: string; uid: string }) {
     if (sawMeta.current && meta === null) navigate('/mp', { replace: true })
   }, [meta, navigate])
 
+  // Apply the buff earned from the last intermission quiz when a round begins.
+  useEffect(() => {
+    if (status !== 'playing') return
+    const tier = playersRef.current[uid]?.quiz?.tier ?? 0
+    setRoundBuff(quizBuff(tier))
+  }, [status, round, uid])
+
   // Reset local lives at the start of each round.
   useEffect(() => {
     deathsRef.current = 0
@@ -176,17 +196,19 @@ function Arena({ code, uid }: { code: string; uid: string }) {
           creditWin(code, winner.uid)
           const winnerWins = (winner.wins ?? 0) + 1
           if (winnerWins >= targetWins) void finishSeries(code, winner.uid)
-          else void goIntermission(code, winner.uid, now + INTERMISSION_MS)
+          else void goIntermission(code, winner.uid, now + QUIZ_INTERMISSION_MS, randomQuizId())
         }
       }
-      if (
-        m.status === 'intermission' &&
-        m.intermissionEndsAt &&
-        now >= m.intermissionEndsAt &&
-        advancedRoundRef.current !== round
-      ) {
-        advancedRoundRef.current = round
-        void nextRound(code, round + 1, ROUND_DURATION_MS)
+      if (m.status === 'intermission' && advancedRoundRef.current !== round) {
+        // Start the next round once everyone online has answered the quiz, or
+        // when the intermission times out (so one slow player can't stall it).
+        const online = Object.values(playersRef.current).filter((p) => p.online)
+        const allAnswered = online.length > 0 && online.every((p) => p.quiz?.answered)
+        const timedOut = Boolean(m.intermissionEndsAt && now >= m.intermissionEndsAt)
+        if (allAnswered || timedOut) {
+          advancedRoundRef.current = round
+          void nextRound(code, round + 1, ROUND_DURATION_MS)
+        }
       }
     }, 400)
     return () => clearInterval(t)
@@ -320,7 +342,16 @@ function Arena({ code, uid }: { code: string; uid: string }) {
         />
       </GameStateProvider>
 
-      {status === 'intermission' && <Intermission meta={meta} roster={roster} colors={colors} selfUid={uid} />}
+      {status === 'intermission' && (
+        <Intermission
+          meta={meta}
+          roster={roster}
+          colors={colors}
+          selfUid={uid}
+          code={code}
+          playersRef={playersRef}
+        />
+      )}
       {status !== 'playing' && status !== 'intermission' && (
         <div className="mp-countdown">Waiting for the match to start…</div>
       )}
@@ -337,11 +368,15 @@ function Intermission({
   roster,
   colors,
   selfUid,
+  code,
+  playersRef,
 }: {
   meta: NetMeta | null
   roster: NetPlayer[]
   colors: Record<string, string>
   selfUid: string
+  code: string
+  playersRef: MutableRefObject<Record<string, NetPlayer>>
 }) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
@@ -353,12 +388,17 @@ function Intermission({
   const ranked = [...roster].sort(
     (a, b) => (b.wins ?? 0) - (a.wins ?? 0) || (b.kills ?? 0) - (a.kills ?? 0),
   )
+  const online = roster.filter((p) => p.online)
+  const answered = online.filter((p) => playersRef.current[p.uid]?.quiz?.answered).length
   return (
     <div className="mp-intermission">
       <div className="mp-results-card">
         <span className="mode-eyebrow">Round {meta?.round} complete</span>
         <h1 className="mp-title">{winner ? `${winner.name} takes the round` : 'Round over'}</h1>
-        <ol className="mp-results-list">
+
+        <IntermissionQuiz code={code} uid={selfUid} quizId={meta?.quizId} />
+
+        <ol className="mp-results-list mp-results-compact">
           {ranked.map((p) => (
             <li key={p.uid} className={`mp-results-row${p.uid === selfUid ? ' is-me' : ''}`}>
               <span className="mp-board-dot" style={{ background: colors[p.uid] }} />
@@ -369,8 +409,78 @@ function Intermission({
             </li>
           ))}
         </ol>
-        <p className="mp-series-note">Next round in {left}s…</p>
+        <p className="mp-series-note">
+          {answered}/{online.length} answered · next round in {left}s…
+        </p>
       </div>
+    </div>
+  )
+}
+
+/**
+ * One random problem-set question between rounds. Wrong taps cost you (they
+ * count as mistakes and drop your reward tier); answering fast and clean earns
+ * the biggest next-round buff. Submits once and then waits for everyone else.
+ */
+function IntermissionQuiz({ code, uid, quizId }: { code: string; uid: string; quizId?: number }) {
+  const question = useMemo(() => (quizId == null ? null : getQuizQuestion(quizId)), [quizId])
+  const startRef = useRef(Date.now())
+  const mistakesRef = useRef(0)
+  const [wrong, setWrong] = useState<Set<string>>(new Set())
+  const [done, setDone] = useState<{ tier: number } | null>(null)
+
+  // Fresh question each intermission.
+  useEffect(() => {
+    startRef.current = Date.now()
+    mistakesRef.current = 0
+    setWrong(new Set())
+    setDone(null)
+  }, [quizId])
+
+  if (!question) return null
+
+  const choose = (id: string) => {
+    if (done) return
+    if (id === question.correctId) {
+      const timeMs = Date.now() - startRef.current
+      const tier = quizTier(true, timeMs, mistakesRef.current)
+      submitQuiz(code, uid, { correct: true, timeMs, mistakes: mistakesRef.current, tier })
+      setDone({ tier })
+    } else {
+      mistakesRef.current += 1
+      setWrong((prev) => new Set(prev).add(id))
+    }
+  }
+
+  const buff = done ? quizBuff(done.tier) : null
+
+  return (
+    <div className="mp-quiz">
+      <div className="mp-quiz-prompt">{question.prompt}</div>
+      <div className="mp-quiz-choices">
+        {question.choices.map((c) => {
+          const isWrong = wrong.has(c.id)
+          const isPicked = Boolean(done) && c.id === question.correctId
+          return (
+            <button
+              key={c.id}
+              type="button"
+              className={`mp-quiz-choice${isWrong ? ' is-wrong' : ''}${isPicked ? ' is-correct' : ''}`}
+              disabled={Boolean(done) || isWrong}
+              onClick={() => choose(c.id)}
+            >
+              {c.label}
+            </button>
+          )
+        })}
+      </div>
+      {done && (
+        <p className="mp-quiz-result">
+          {buff && buff.damage > 0
+            ? `Nice — next round buff: +${buff.damage} power${buff.hp > 0 ? ` · +${buff.hp} HP` : ''}.`
+            : 'Answered. Waiting for everyone…'}
+        </p>
+      )}
     </div>
   )
 }

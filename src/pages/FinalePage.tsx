@@ -15,6 +15,7 @@ import Ally from '../game3d/combat/Ally'
 import WeaponController from '../game3d/combat/WeaponController'
 import { useRun } from '../game3d/state/RunContext'
 import { useInventory } from '../game3d/state/InventoryContext'
+import { prestigeReward, type GearItem } from '../game3d/systems/gear'
 import { R3D, vec3, type Vec3 } from '../game3d/contracts'
 import '../styles/finale.css'
 
@@ -160,9 +161,26 @@ function FinaleInner() {
   const [invOpen, setInvOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [elapsedSec, setElapsedSec] = useState(0)
+  const [prestigeAward, setPrestigeAward] = useState<{ level: number; item: GearItem | null } | null>(null)
+  const prestigeDone = useRef(false)
 
   phaseRef.current = phase
   gameOverRef.current = run.isGameOver
+
+  // Finishing the game = a PRESTIGE: keep every upgrade, pocket one more bonus
+  // unlock, and bump the prestige level (which makes the next run's questions
+  // and enemies tougher). Runs exactly once when we reach the end.
+  useEffect(() => {
+    if (phase !== 'end' || prestigeDone.current) return
+    prestigeDone.current = true
+    const reward = prestigeReward(inv.owned)
+    if (reward) {
+      inv.addItem(reward.id)
+      inv.equip(reward.id)
+    }
+    inv.prestigeUp()
+    setPrestigeAward({ level: inv.prestige + 1, item: reward ?? null })
+  }, [phase, inv])
 
   const blocked = menuOpen || invOpen || run.isGameOver || phase === 'end'
 
@@ -500,6 +518,18 @@ function FinaleInner() {
             <div className="finale-end-title">THE END</div>
             <p className="finale-sub">Logic Locker: Breakout — complete.</p>
 
+            {prestigeAward && (
+              <div className="finale-prestige">
+                <div className="finale-prestige-badge">PRESTIGE {prestigeAward.level}</div>
+                <p className="finale-prestige-note">
+                  You keep every upgrade. {prestigeAward.item
+                    ? `Bonus unlock: ${prestigeAward.item.icon} ${prestigeAward.item.name}.`
+                    : 'Your arsenal is already complete.'}{' '}
+                  Replay for tougher questions and bigger swarms — the more you learn, the stronger you get.
+                </p>
+              </div>
+            )}
+
             <table className="finale-stats">
               <tbody>
                 <tr>
@@ -536,7 +566,7 @@ function FinaleInner() {
                   navigate(R3D.world)
                 }}
               >
-                Play again
+                {prestigeAward ? `Prestige ${prestigeAward.level} · Replay` : 'Play again'}
               </button>
               <button type="button" className="btn btn-ghost" onClick={() => navigate(R3D.leaderboard)}>
                 View leaderboard

@@ -132,14 +132,16 @@ export function difficultyDef(id: Difficulty): DifficultyDef {
  * Each chosen question is resolved to a (varied) authored track with its answer
  * order shuffled, so repeated visits aren't memorizable.
  */
-export function buildQuiz(lesson: Lesson, difficulty: Difficulty): InteractiveStep[] {
+export function buildQuiz(lesson: Lesson, difficulty: Difficulty, prestige = 0): InteractiveStep[] {
   const base = lesson.steps.filter(isInteractive)
   if (base.length === 0) return []
   const { count } = difficultyDef(difficulty)
   const tracks = trackCount(lesson)
 
   let picks: InteractiveStep[]
-  if (difficulty === 'thorough') {
+  // After a prestige, even the "thorough" sweep skews to the harder questions
+  // first — finishing the game makes every replay genuinely tougher.
+  if (difficulty === 'thorough' && prestige <= 0) {
     // Ramp easy → hard; cycle from the easiest when padding past the pool.
     const easyFirst = [...base].sort((a, b) => stepWeight(a) - stepWeight(b))
     picks = Array.from({ length: count }, (_, i) => easyFirst[i % easyFirst.length])
@@ -150,11 +152,12 @@ export function buildQuiz(lesson: Lesson, difficulty: Difficulty): InteractiveSt
   }
 
   // Resolve each pick to a varied track; give repeats of the same base question
-  // a different track so duplicates don't read identically.
+  // a different track so duplicates don't read identically. Prestige offsets the
+  // starting track so a replay surfaces fresh wording rather than the same set.
   const lastTrack = new Map<string, number>()
   return picks.map((step) => {
     const prev = lastTrack.get(step.id)
-    let track = Math.floor(Math.random() * tracks)
+    let track = (Math.floor(Math.random() * tracks) + prestige) % tracks
     if (tracks > 1 && prev !== undefined) track = (prev + 1) % tracks
     lastTrack.set(step.id, track)
     return varyStep(step, track) as InteractiveStep

@@ -44,16 +44,16 @@ interface EnemySpawn {
   damage: number
 }
 
-function buildEnemies(order: number, size: [number, number]): EnemySpawn[] {
+function buildEnemies(order: number, size: [number, number], prestige = 0): EnemySpawn[] {
   const [w, d] = size
-  // Tougher, gear-gated: with only fists these guards genuinely threaten you, so
-  // earning weapons/armor matters. The enemy COUNT ramps hard the deeper you go
-  // (the late blocks are swarms), while HP stays moderate so weak early guns and
-  // the late AoE both stay useful.
-  const count = Math.min(3 + Math.floor(order * 0.85), 8)
-  const speed = 2.6 + order * 0.22
-  const hp = 3 + Math.round(order * 1.2)
-  const rangedCount = order < 2 ? 0 : order < 4 ? 2 : 3
+  // Tougher, gear-gated: earning weapons/armor matters. The enemy COUNT ramps
+  // hard the deeper you go (the late blocks are swarms), while HP stays moderate
+  // so weak early guns and the late AoE both stay useful. Each PRESTIGE adds a
+  // guard or two and a little extra HP, so replays bite harder.
+  const count = Math.min(3 + Math.floor(order * 0.85) + prestige, 8)
+  const speed = 2.6 + order * 0.22 + prestige * 0.15
+  const hp = 3 + Math.round(order * 1.2) + prestige
+  const rangedCount = order < 2 ? Math.min(1, prestige) : order < 4 ? 2 : 3
   const slots: Vec3[] = [
     vec3(-w * 0.28, 1, -d * 0.1),
     vec3(w * 0.28, 1, -d * 0.16),
@@ -117,9 +117,10 @@ function RoomInner({ sectorId }: { sectorId: string }) {
 
   const timer = useRunTimer()
 
-  const parTime = sector?.parTimeSec ?? 90
+  // Less time per prestige (down to a floor) — the clock is part of the ramp.
+  const parTime = Math.max(30, Math.round((sector?.parTimeSec ?? 90) * 0.9 ** inv.prestige))
   const [enemies, setEnemies] = useState<EnemySpawn[]>(() =>
-    buildEnemies(sector?.order ?? 0, def?.size ?? [24, 20]),
+    buildEnemies(sector?.order ?? 0, def?.size ?? [24, 20], inv.prestige),
   )
   const [invOpen, setInvOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -362,7 +363,7 @@ function RoomInner({ sectorId }: { sectorId: string }) {
     setPhase('play')
     setPuzzleOpen(false)
     setTimeLeft(parTime)
-    setEnemies(buildEnemies(sector?.order ?? 0, def?.size ?? [24, 20]))
+    setEnemies(buildEnemies(sector?.order ?? 0, def?.size ?? [24, 20], inv.prestige))
     gs.setPaused(false)
     gs.setDanger(0)
     timer.reset()
@@ -452,6 +453,7 @@ function RoomInner({ sectorId }: { sectorId: string }) {
           sectorId={sectorId}
           lesson={playLesson ?? lesson}
           anchor={def.puzzleAnchor}
+          prestige={inv.prestige}
           onComplete={handlePuzzleComplete}
           onMistake={handlePuzzleMistake}
         />

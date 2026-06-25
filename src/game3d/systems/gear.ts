@@ -233,6 +233,31 @@ export function rewardWheel(
   return entries
 }
 
+/**
+ * The bonus unlock handed out on a prestige (finishing the game). Walks a
+ * power-ordered list and grants the first thing you DON'T already own, so each
+ * prestige guarantees a new upgrade until you've collected the whole arsenal.
+ */
+const PRESTIGE_UNLOCK_ORDER = [
+  'laser-rifle',
+  'energy-shield',
+  'shock-emitter',
+  'riot-armor',
+  'stun-baton',
+  'combat-boots',
+  'plasma-pistol',
+  'dagger',
+  'medkit',
+]
+
+export function prestigeReward(owned: string[]): GearItem | undefined {
+  const ownedSet = new Set(owned)
+  for (const id of PRESTIGE_UNLOCK_ORDER) {
+    if (!ownedSet.has(id) && GEAR[id]) return GEAR[id]
+  }
+  return undefined
+}
+
 /** Pick a winning index from weighted entries. */
 export function pickWeightedIndex(entries: WheelEntry[]): number {
   const total = entries.reduce((s, e) => s + e.weight, 0)

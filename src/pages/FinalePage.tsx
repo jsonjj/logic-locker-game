@@ -36,6 +36,23 @@ const AKASH_RANGE = 3.6
 const SAFE_DIST = 20 // must be this far from the C4 when it blows
 const FUSE_SEC = 5
 
+// The escape corridor hands you a guaranteed crowd-clearer regardless of the
+// gear you brought: a wide AoE blast doing 3 damage, so even the toughest guard
+// (hp ≤ 7) drops in ~3 shots. You are always equipped to fight your way out.
+const FINALE_WEAPON: GearItem = {
+  id: 'breach-cannon',
+  name: 'Breach Cannon',
+  slot: 'weapon',
+  icon: '🌋',
+  color: '#ff8a3d',
+  desc: 'Confiscated riot-suppression cannon. A wide blast that jolts every guard caught in it.',
+  weaponKind: 'ranged',
+  damage: 3,
+  range: 18,
+  cooldownMs: 450,
+  aoe: 6,
+}
+
 interface EnemySpec {
   id: number
   spawn: Vec3
@@ -205,6 +222,7 @@ function FinaleInner() {
     resetRun()
     gs.setDanger(0.85)
     gs.setObjective({ kind: 'escape', text: 'Fight through the guards to the gate', target: C4_POS })
+    setToast(`${FINALE_WEAPON.icon} ${FINALE_WEAPON.name} equipped — blast your way through!`)
     return () => gs.setDanger(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -466,7 +484,7 @@ function FinaleInner() {
           <Ally key={a.id} id={a.id} spawn={a.spawn} paused={blocked} />
         ))}
 
-        <WeaponController disabled={blocked} />
+        <WeaponController disabled={blocked} weaponOverride={FINALE_WEAPON} />
       </GameCanvas>
 
       <Hud
@@ -492,7 +510,7 @@ function FinaleInner() {
       <CombatHud
         lives={run.lives}
         maxLives={run.maxLives}
-        weapon={inv.weapon}
+        weapon={FINALE_WEAPON}
         timeLeftSec={null}
         onOpenInventory={() => setInvOpen(true)}
         toast={toast}

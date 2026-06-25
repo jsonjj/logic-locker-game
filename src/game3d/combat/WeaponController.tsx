@@ -5,6 +5,7 @@ import { useGameState } from '../state/GameStateContext'
 import { useInventory } from '../state/InventoryContext'
 import { useCombat } from './CombatContext'
 import { playBlast } from '../../audio/sound'
+import type { GearItem } from '../systems/gear'
 
 interface Fx {
   kind: 'ranged' | 'melee' | 'aoe'
@@ -22,11 +23,14 @@ const FIRE_EVENT = 'll-fire'
 export interface WeaponControllerProps {
   /** Disable firing (menus, puzzle overlays, cutscenes). */
   disabled?: boolean
+  /** Force a specific weapon (e.g. the finale's guaranteed AoE cannon). */
+  weaponOverride?: GearItem
 }
 
-export default function WeaponController({ disabled = false }: WeaponControllerProps) {
+export default function WeaponController({ disabled = false, weaponOverride }: WeaponControllerProps) {
   const gs = useGameState()
-  const { weapon } = useInventory()
+  const { weapon: equippedWeapon } = useInventory()
+  const weapon = weaponOverride ?? equippedWeapon
   const combat = useCombat()
   const lastFire = useRef(0)
   const [fx, setFx] = useState<Fx | null>(null)

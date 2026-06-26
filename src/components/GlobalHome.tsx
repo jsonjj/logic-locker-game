@@ -3,12 +3,12 @@ import { useAuth } from '../context/AuthContext'
 import '../styles/global-home.css'
 
 // Routes that already have their own back/leave affordance, or where "home"
-// makes no sense (the menu itself, pre-login screens).
-const HIDDEN_PREFIXES = ['/auth', '/profile-setup', '/play', '/mp']
+// makes no sense (the world hub itself, pre-login screens).
+const HIDDEN_PREFIXES = ['/auth', '/profile-setup', '/world']
 
 /**
- * Always-on "Menu" button (top-right, beside Log out) so the player can hop back
- * to the One Player / Multiplayer chooser from any in-game screen.
+ * Always-on "Hub" button (top-right, beside Log out) so the player can hop back
+ * to the single-player world hub from any in-game screen.
  */
 export default function GlobalHome() {
   const { user } = useAuth()
@@ -23,11 +23,11 @@ export default function GlobalHome() {
     <button
       type="button"
       className="global-home"
-      onClick={() => navigate('/play')}
-      aria-label="Back to menu"
+      onClick={() => navigate('/world')}
+      aria-label="Back to hub"
     >
       <span aria-hidden>⌂</span>
-      Menu
+      Hub
     </button>
   )
 }

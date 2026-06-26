@@ -10,8 +10,6 @@ import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import ProfileSetupPage from './pages/ProfileSetupPage'
 import LeaderboardPage from './pages/LeaderboardPage'
-import ModeSelectPage from './pages/ModeSelectPage'
-import MultiplayerLobbyPage from './pages/MultiplayerLobbyPage'
 import { ROOM_ROUTE_PATTERN } from './game3d/contracts'
 
 // The 3D pages pull in three.js + Rapier (a large bundle), so they are
@@ -20,7 +18,6 @@ const WorldPage = lazy(() => import('./pages/WorldPage'))
 const SectorRoomPage = lazy(() => import('./pages/SectorRoomPage'))
 const BossRoomPage = lazy(() => import('./pages/BossRoomPage'))
 const FinalePage = lazy(() => import('./pages/FinalePage'))
-const MultiplayerArenaPage = lazy(() => import('./pages/MultiplayerArenaPage'))
 
 function World3DFallback() {
   return <div className="world-loading">Entering the compound…</div>
@@ -44,40 +41,9 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/play"
-          element={
-            <ProtectedRoute>
-              <ModeSelectPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mp"
-          element={
-            <ProtectedRoute>
-              <MultiplayerLobbyPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mp/:code"
-          element={
-            <ProtectedRoute>
-              <MultiplayerLobbyPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mp/:code/play"
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<World3DFallback />}>
-                <MultiplayerArenaPage />
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
+        {/* Single-player only: /play drops you straight into the world spawn
+            (no mode chooser). Kept as a redirect so older links still work. */}
+        <Route path="/play" element={<Navigate to="/world" replace />} />
         <Route
           path="/world"
           element={

@@ -12,7 +12,7 @@ export default function LandingPage() {
   const navigate = useNavigate()
 
   if (!loading && user) {
-    return <Navigate to={profile?.displayName ? '/play' : '/profile-setup'} replace />
+    return <Navigate to={profile?.displayName ? '/world' : '/profile-setup'} replace />
   }
 
   return (

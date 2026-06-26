@@ -781,3 +781,26 @@
     animation: none;
   }
 }
+
+/* AI nudge shown after a wrong answer (from /api/ai). */
+.p3-feedback.ai-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #e7deff;
+  background: rgba(122, 92, 255, 0.12);
+  border-color: rgba(122, 92, 255, 0.4);
+}
+
+.p3-aihint-avatar {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--p3-accent), #7a5cff);
+}

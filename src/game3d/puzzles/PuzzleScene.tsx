@@ -21,6 +21,9 @@ import type { InteractiveStep } from './types'
 import DeviceRenderer from './DeviceRenderer'
 import LockInset from './LockInset'
 import { usePuzzleTimer } from './usePuzzleTimer'
+import { useAuth } from '../../context/AuthContext'
+import { personalizeQuiz } from '../../ai/personalizeQuiz'
+import { getHint } from '../../ai/feedbackHints'
 import '../../styles/puzzles3d.css'
 
 function formatTime(ms: number): string {
@@ -40,13 +43,49 @@ export default function PuzzleScene({ sectorId, lesson, prestige = 0, onComplete
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
   const [showHint, setShowHint] = useState(false)
+  const [aiHint, setAiHint] = useState<string | null>(null)
   const [, forceTick] = useState(0)
+  const { user } = useAuth()
 
-  // The quiz is built once per chosen difficulty (randomized variant per node).
-  const quiz = useMemo<InteractiveStep[]>(
+  // The deterministic, already-correct quiz built for the chosen difficulty.
+  // WHICH questions appear and their answers never depend on AI — only the prompt
+  // wording may be personalized (and validated) on top. This is the source of
+  // truth + fallback.
+  const baseQuiz = useMemo<InteractiveStep[]>(
     () => (difficulty ? buildQuiz(lesson, difficulty, prestige) : []),
     [lesson, difficulty, prestige],
   )
+  const [quiz, setQuiz] = useState<InteractiveStep[]>(baseQuiz)
+  // Once the player answers (or misses) we stop swapping in a late AI rewrite so
+  // the question can't change under them mid-attempt.
+  const startedRef = useRef(false)
+  const currentIndexRef = useRef(0)
+
+  // Reset to the deterministic quiz whenever the underlying run changes.
+  useEffect(() => {
+    setQuiz(baseQuiz)
+    startedRef.current = false
+  }, [baseQuiz])
+
+  // Personalize prompts (coherent theme, level-appropriate wording) in the
+  // background. Cached per user+room+difficulty; silently keeps originals offline.
+  useEffect(() => {
+    if (baseQuiz.length === 0) return
+    let cancelled = false
+    void personalizeQuiz(baseQuiz, {
+      uid: user?.uid ?? 'anon',
+      sectorId,
+      topic: lesson.title,
+      prestige,
+      mode: difficulty ?? 'standard',
+    }).then((personalized) => {
+      if (cancelled || startedRef.current) return
+      if (personalized !== baseQuiz) setQuiz(personalized)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [baseQuiz, user?.uid, sectorId, lesson.title, prestige, difficulty])
 
   // Tick once a second so the on-screen clock stays live.
   useEffect(() => {
@@ -54,14 +93,36 @@ export default function PuzzleScene({ sectorId, lesson, prestige = 0, onComplete
     return () => window.clearInterval(id)
   }, [])
 
+  // Clear the per-question AI hint whenever we move to a new question.
+  useEffect(() => {
+    setAiHint(null)
+    currentIndexRef.current = stepIndex
+  }, [stepIndex])
+
   const sector = getSector(sectorId)
   const sectorName = sector?.name ?? lesson.title
 
   const registerMistake = () => {
     mistakesRef.current += 1
     stepMistakes.current += 1
+    startedRef.current = true
     setMistakes(mistakesRef.current)
     onMistake?.()
+
+    // Pull an AI nudge tailored to this question + how many times they've missed
+    // it. Best-effort: stays null offline and never blocks the device.
+    const step = quiz[stepIndex]
+    if (step) {
+      const idx = stepIndex
+      const attempt = stepMistakes.current
+      void getHint({
+        stepId: step.id,
+        prompt: step.prompt,
+        attempt,
+      }).then((h) => {
+        if (h && currentIndexRef.current === idx) setAiHint(h)
+      })
+    }
   }
 
   const recordCurrent = () => {
@@ -77,6 +138,7 @@ export default function PuzzleScene({ sectorId, lesson, prestige = 0, onComplete
 
   const handleSolved = () => {
     if (!difficulty) return
+    startedRef.current = true
     recordCurrent()
     if (stepIndex + 1 < quiz.length) {
       setStepIndex((i) => i + 1)
@@ -157,6 +219,7 @@ export default function PuzzleScene({ sectorId, lesson, prestige = 0, onComplete
               total={quiz.length}
               showHint={showHint}
               progress={progress}
+              aiHint={aiHint}
               onSolved={handleSolved}
               onMistake={registerMistake}
             />
@@ -235,6 +298,7 @@ function QuizRun({
   total,
   showHint,
   progress,
+  aiHint,
   onSolved,
   onMistake,
 }: {
@@ -243,6 +307,7 @@ function QuizRun({
   total: number
   showHint: boolean
   progress: number
+  aiHint: string | null
   onSolved: () => void
   onMistake: () => void
 }) {
@@ -259,6 +324,14 @@ function QuizRun({
         </span>
       </div>
       <DeviceRenderer key={`${stepIndex}:${step.id}`} step={step} onSolved={onSolved} onMistake={onMistake} />
+      {aiHint && (
+        <div className="p3-feedback ai-hint" role="status">
+          <span className="p3-aihint-avatar" aria-hidden="true">
+            A
+          </span>
+          <span>{aiHint}</span>
+        </div>
+      )}
       {showHint && step.guidedReasoning && step.guidedReasoning.length > 0 && (
         <div className="p3-feedback hint">
           Reasoning trace
